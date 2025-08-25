@@ -61,7 +61,28 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Security and fraud detection theme colors
+				security: {
+					primary: 'hsl(var(--security-primary))',
+					secondary: 'hsl(var(--security-secondary))',
+					trust: 'hsl(var(--trust-blue))',
+					ai: 'hsl(var(--ai-accent))'
 				}
+			},
+			backgroundImage: {
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-feature': 'var(--gradient-feature)'
+			},
+			boxShadow: {
+				'card': 'var(--shadow-card)',
+				'feature': 'var(--shadow-feature)',
+				'hero': 'var(--shadow-hero)'
+			},
+			transitionTimingFunction: {
+				'smooth': 'var(--transition-smooth)',
+				'bounce': 'var(--transition-bounce)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
