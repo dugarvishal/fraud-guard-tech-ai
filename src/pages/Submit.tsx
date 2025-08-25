@@ -1,0 +1,421 @@
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Upload, Link2, Smartphone, FileText, CheckCircle, AlertTriangle, Clock, Zap } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
+import LoginBenefitsBanner from '@/components/LoginBenefitsBanner';
+import Header from '@/components/Header';
+
+const urlSchema = z.object({
+  url: z.string().url('Please enter a valid URL (e.g., https://example.com)'),
+  description: z.string().optional(),
+});
+
+const appSchema = z.object({
+  storeUrl: z.string().url('Please enter a valid app store URL'),
+  appName: z.string().min(1, 'App name is required'),
+  description: z.string().optional(),
+});
+
+const batchSchema = z.object({
+  csvFile: z.any().refine((files) => files?.length === 1, 'Please select a CSV file'),
+});
+
+type UrlForm = z.infer<typeof urlSchema>;
+type AppForm = z.infer<typeof appSchema>;
+type BatchForm = z.infer<typeof batchSchema>;
+
+interface AnalysisResult {
+  id: string;
+  url: string;
+  riskScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  status: 'completed' | 'processing' | 'failed';
+  analysisResults: any;
+}
+
+const Submit = () => {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [results, setResults] = useState<AnalysisResult[]>([]);
+  const [showBenefitsBanner, setShowBenefitsBanner] = useState(false);
+  const { user } = useAuth();
+
+  const urlForm = useForm<UrlForm>({
+    resolver: zodResolver(urlSchema),
+    defaultValues: { url: '', description: '' },
+  });
+
+  const appForm = useForm<AppForm>({
+    resolver: zodResolver(appSchema),
+    defaultValues: { storeUrl: '', appName: '', description: '' },
+  });
+
+  const batchForm = useForm<BatchForm>({
+    resolver: zodResolver(batchSchema),
+  });
+
+  const generateSessionId = () => {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  };
+
+  const simulateAnalysis = async (url: string): Promise<AnalysisResult> => {
+    // Simulate AI analysis with realistic results
+    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+    
+    const riskFactors = [
+      'Suspicious domain age',
+      'Unusual SSL certificate',
+      'Multiple redirects detected',
+      'Missing security headers',
+      'Suspicious JavaScript patterns',
+      'Phishing keywords detected',
+      'Malicious iframe content',
+      'Suspicious form elements'
+    ];
+
+    const riskScore = Math.floor(Math.random() * 100);
+    const riskLevel = riskScore >= 80 ? 'critical' : riskScore >= 60 ? 'high' : riskScore >= 30 ? 'medium' : 'low';
+    
+    const analysisResults = {
+      domainAge: Math.floor(Math.random() * 3650), // days
+      sslStatus: Math.random() > 0.3 ? 'valid' : 'invalid',
+      redirectCount: Math.floor(Math.random() * 5),
+      maliciousContent: Math.random() > 0.7,
+      phishingKeywords: Math.floor(Math.random() * 10),
+      riskFactors: riskFactors.slice(0, Math.floor(Math.random() * 4) + 1),
+      scanTimestamp: new Date().toISOString(),
+    };
+
+    return {
+      id: Math.random().toString(36).substring(2),
+      url,
+      riskScore,
+      riskLevel,
+      status: 'completed',
+      analysisResults,
+    };
+  };
+
+  const handleUrlSubmit = async (data: UrlForm) => {
+    setIsAnalyzing(true);
+    setAnalysisProgress(0);
+
+    try {
+      const sessionId = user ? null : generateSessionId();
+      
+      // Store submission in database
+      const { data: submission, error } = await supabase
+        .from('url_submissions')
+        .insert({
+          user_id: user?.id || null,
+          session_id: sessionId,
+          url: data.url,
+          submission_type: 'url',
+          analysis_status: 'processing',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setAnalysisProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
+      // Perform analysis
+      const result = await simulateAnalysis(data.url);
+      
+      clearInterval(progressInterval);
+      setAnalysisProgress(100);
+
+      // Update submission with results
+      await supabase
+        .from('url_submissions')
+        .update({
+          analysis_status: 'completed',
+          risk_score: result.riskScore,
+          risk_level: result.riskLevel,
+          analysis_results: result.analysisResults,
+        })
+        .eq('id', submission.id);
+
+      setResults([result]);
+      urlForm.reset();
+
+      toast({
+        title: "Analysis Complete",
+        description: `Risk level: ${result.riskLevel.toUpperCase()} (${result.riskScore}/100)`,
+      });
+
+      // Show benefits banner for anonymous users after analysis
+      if (!user) {
+        setTimeout(() => setShowBenefitsBanner(true), 1000);
+      }
+
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Please try again or contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+      setAnalysisProgress(0);
+    }
+  };
+
+  const handleAppSubmit = async (data: AppForm) => {
+    // Similar implementation for app analysis
+    toast({
+      title: "App Analysis",
+      description: "App analysis coming soon!",
+    });
+  };
+
+  const handleBatchSubmit = async (data: BatchForm) => {
+    // Similar implementation for batch analysis
+    toast({
+      title: "Batch Analysis",
+      description: "Batch analysis coming soon!",
+    });
+  };
+
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case 'low': return 'text-green-600';
+      case 'medium': return 'text-yellow-600';
+      case 'high': return 'text-orange-600';
+      case 'critical': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const getRiskIcon = (level: string) => {
+    switch (level) {
+      case 'low': return CheckCircle;
+      case 'medium': return Clock;
+      case 'high': return AlertTriangle;
+      case 'critical': return AlertTriangle;
+      default: return Clock;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header Section */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-2">Security Analysis</h1>
+            <p className="text-muted-foreground">
+              Submit URLs, apps, or batch files for comprehensive fraud detection analysis
+            </p>
+          </div>
+
+          {/* Benefits Banner */}
+          {showBenefitsBanner && (
+            <div className="mb-6">
+              <LoginBenefitsBanner 
+                trigger="analysis-complete"
+                onDismiss={() => setShowBenefitsBanner(false)}
+              />
+            </div>
+          )}
+
+          {/* Submission Form */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Submit for Analysis
+              </CardTitle>
+              <CardDescription>
+                Choose your submission type and provide the necessary information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="url" className="space-y-6">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="url" className="flex items-center gap-2">
+                    <Link2 className="h-4 w-4" />
+                    Website URL
+                  </TabsTrigger>
+                  <TabsTrigger value="app" className="flex items-center gap-2">
+                    <Smartphone className="h-4 w-4" />
+                    Mobile App
+                  </TabsTrigger>
+                  <TabsTrigger value="batch" className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Batch Upload
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="url" className="space-y-4">
+                  <Form {...urlForm}>
+                    <form onSubmit={urlForm.handleSubmit(handleUrlSubmit)} className="space-y-4">
+                      <FormField
+                        control={urlForm.control}
+                        name="url"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Website URL</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="https://example.com" 
+                                {...field}
+                                disabled={isAnalyzing}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Enter the full URL including https:// or http://
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={urlForm.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description (Optional)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Describe any suspicious behavior or concerns..."
+                                {...field}
+                                disabled={isAnalyzing}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {isAnalyzing && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Analyzing website...</span>
+                            <span>{analysisProgress}%</span>
+                          </div>
+                          <Progress value={analysisProgress} className="w-full" />
+                        </div>
+                      )}
+
+                      <Button type="submit" disabled={isAnalyzing} className="w-full">
+                        {isAnalyzing ? 'Analyzing...' : 'Analyze Website'}
+                      </Button>
+                    </form>
+                  </Form>
+                </TabsContent>
+
+                <TabsContent value="app" className="space-y-4">
+                  <Alert>
+                    <Smartphone className="h-4 w-4" />
+                    <AlertDescription>
+                      App analysis feature coming soon! We'll support iOS App Store and Google Play Store links.
+                    </AlertDescription>
+                  </Alert>
+                </TabsContent>
+
+                <TabsContent value="batch" className="space-y-4">
+                  <Alert>
+                    <Upload className="h-4 w-4" />
+                    <AlertDescription>
+                      Batch upload feature coming soon! Upload CSV files with multiple URLs for bulk analysis.
+                    </AlertDescription>
+                  </Alert>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          {/* Results Section */}
+          {results.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Analysis Results</CardTitle>
+                <CardDescription>
+                  Detailed security analysis for your submitted URLs
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {results.map((result) => {
+                  const RiskIcon = getRiskIcon(result.riskLevel);
+                  return (
+                    <div key={result.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <RiskIcon className={`h-5 w-5 ${getRiskColor(result.riskLevel)}`} />
+                          <span className="font-medium truncate">{result.url}</span>
+                        </div>
+                        <Badge 
+                          variant={result.riskLevel === 'low' ? 'default' : 'destructive'}
+                          className={result.riskLevel === 'low' ? 'bg-green-100 text-green-800' : ''}
+                        >
+                          {result.riskLevel.toUpperCase()} RISK
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Risk Score</span>
+                          <p className={`font-medium ${getRiskColor(result.riskLevel)}`}>
+                            {result.riskScore}/100
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Domain Age</span>
+                          <p className="font-medium">{result.analysisResults.domainAge} days</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">SSL Status</span>
+                          <p className="font-medium">{result.analysisResults.sslStatus}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Redirects</span>
+                          <p className="font-medium">{result.analysisResults.redirectCount}</p>
+                        </div>
+                      </div>
+
+                      {result.analysisResults.riskFactors.length > 0 && (
+                        <div>
+                          <span className="text-sm text-muted-foreground">Risk Factors:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {result.analysisResults.riskFactors.map((factor: string, index: number) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {factor}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Submit;

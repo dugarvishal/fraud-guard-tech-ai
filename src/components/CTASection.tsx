@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Shield, Users, Globe } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const CTASection = () => {
   return (
@@ -18,9 +19,11 @@ const CTASection = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Button size="lg" variant="secondary" className="bg-white text-security-primary hover:bg-white/90 font-semibold">
-                  Start Free Analysis
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                <Button size="lg" variant="secondary" className="bg-white text-security-primary hover:bg-white/90 font-semibold" asChild>
+                  <Link to="/submit">
+                    Start Free Analysis
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
                   Schedule Demo

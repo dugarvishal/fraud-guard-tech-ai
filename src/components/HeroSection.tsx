@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Zap, Eye } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-fraud-detection.jpg";
 
 const HeroSection = () => {
@@ -41,9 +42,11 @@ const HeroSection = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-gradient-hero hover:opacity-90 transition-smooth shadow-hero">
-                Start Free Analysis
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button size="lg" className="bg-gradient-hero hover:opacity-90 transition-smooth shadow-hero" asChild>
+                <Link to="/submit">
+                  Start Free Analysis
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
               <Button variant="outline" size="lg" className="border-security-primary/20 hover:bg-security-primary/10">
                 <Eye className="mr-2 h-4 w-4" />
