@@ -17,6 +17,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import LoginBenefitsBanner from '@/components/LoginBenefitsBanner';
 import Header from '@/components/Header';
+import AnalysisResultCard from '@/components/AnalysisResultCard';
+import { simulateEnhancedAnalysis } from '@/lib/aiAnalysis';
 
 const urlSchema = z.object({
   url: z.string().url('Please enter a valid URL (e.g., https://example.com)'),
@@ -72,41 +74,10 @@ const Submit = () => {
   };
 
   const simulateAnalysis = async (url: string): Promise<AnalysisResult> => {
-    // Simulate AI analysis with realistic results
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+    // Use enhanced AI analysis with progress updates
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
     
-    const riskFactors = [
-      'Suspicious domain age',
-      'Unusual SSL certificate',
-      'Multiple redirects detected',
-      'Missing security headers',
-      'Suspicious JavaScript patterns',
-      'Phishing keywords detected',
-      'Malicious iframe content',
-      'Suspicious form elements'
-    ];
-
-    const riskScore = Math.floor(Math.random() * 100);
-    const riskLevel = riskScore >= 80 ? 'critical' : riskScore >= 60 ? 'high' : riskScore >= 30 ? 'medium' : 'low';
-    
-    const analysisResults = {
-      domainAge: Math.floor(Math.random() * 3650), // days
-      sslStatus: Math.random() > 0.3 ? 'valid' : 'invalid',
-      redirectCount: Math.floor(Math.random() * 5),
-      maliciousContent: Math.random() > 0.7,
-      phishingKeywords: Math.floor(Math.random() * 10),
-      riskFactors: riskFactors.slice(0, Math.floor(Math.random() * 4) + 1),
-      scanTimestamp: new Date().toISOString(),
-    };
-
-    return {
-      id: Math.random().toString(36).substring(2),
-      url,
-      riskScore,
-      riskLevel,
-      status: 'completed',
-      analysisResults,
-    };
+    return await simulateEnhancedAnalysis(url);
   };
 
   const handleUrlSubmit = async (data: UrlForm) => {
@@ -356,59 +327,46 @@ const Submit = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {results.map((result) => {
-                  const RiskIcon = getRiskIcon(result.riskLevel);
-                  return (
-                    <div key={result.id} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <RiskIcon className={`h-5 w-5 ${getRiskColor(result.riskLevel)}`} />
-                          <span className="font-medium truncate">{result.url}</span>
-                        </div>
-                        <Badge 
-                          variant={result.riskLevel === 'low' ? 'default' : 'destructive'}
-                          className={result.riskLevel === 'low' ? 'bg-green-100 text-green-800' : ''}
-                        >
-                          {result.riskLevel.toUpperCase()} RISK
-                        </Badge>
-                      </div>
+                {results.map((result) => (
+                  <AnalysisResultCard
+                    key={result.id}
+                    result={result}
+                    showDetailed={true}
+                    onShare={(result) => {
+                      navigator.clipboard.writeText(
+                        `Security Analysis Result for ${result.url}\nRisk Score: ${result.riskScore}/100\nRisk Level: ${result.riskLevel.toUpperCase()}`
+                      );
+                      toast({
+                        title: "Analysis Shared",
+                        description: "Analysis details copied to clipboard",
+                      });
+                    }}
+                    onDownload={(result) => {
+                      const data = {
+                        url: result.url,
+                        riskScore: result.riskScore,
+                        riskLevel: result.riskLevel,
+                        analysisResults: result.analysisResults,
+                        timestamp: new Date().toISOString()
+                      };
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Risk Score</span>
-                          <p className={`font-medium ${getRiskColor(result.riskLevel)}`}>
-                            {result.riskScore}/100
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Domain Age</span>
-                          <p className="font-medium">{result.analysisResults.domainAge} days</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">SSL Status</span>
-                          <p className="font-medium">{result.analysisResults.sslStatus}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Redirects</span>
-                          <p className="font-medium">{result.analysisResults.redirectCount}</p>
-                        </div>
-                      </div>
-
-                      {result.analysisResults.riskFactors.length > 0 && (
-                        <div>
-                          <span className="text-sm text-muted-foreground">Risk Factors:</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {result.analysisResults.riskFactors.map((factor: string, index: number) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {factor}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      const blob = new Blob([JSON.stringify(data, null, 2)], {
+                        type: 'application/json'
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `security-analysis-${result.id}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      
+                      toast({
+                        title: "Report Downloaded",
+                        description: "Analysis report saved successfully",
+                      });
+                    }}
+                  />
+                ))}
               </CardContent>
             </Card>
           )}
