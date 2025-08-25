@@ -14,7 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      batch_submissions: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          processed_urls: number
+          session_id: string | null
+          status: string
+          total_urls: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          processed_urls?: number
+          session_id?: string | null
+          status?: string
+          total_urls?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          processed_urls?: number
+          session_id?: string | null
+          status?: string
+          total_urls?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      url_submissions: {
+        Row: {
+          analysis_results: Json | null
+          analysis_status: string
+          app_store_link: string | null
+          created_at: string
+          file_name: string | null
+          file_size: number | null
+          id: string
+          risk_level: string | null
+          risk_score: number | null
+          session_id: string | null
+          submission_type: string
+          updated_at: string
+          url: string
+          user_id: string | null
+        }
+        Insert: {
+          analysis_results?: Json | null
+          analysis_status?: string
+          app_store_link?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          risk_level?: string | null
+          risk_score?: number | null
+          session_id?: string | null
+          submission_type?: string
+          updated_at?: string
+          url: string
+          user_id?: string | null
+        }
+        Update: {
+          analysis_results?: Json | null
+          analysis_status?: string
+          app_store_link?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          risk_level?: string | null
+          risk_score?: number | null
+          session_id?: string | null
+          submission_type?: string
+          updated_at?: string
+          url?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
