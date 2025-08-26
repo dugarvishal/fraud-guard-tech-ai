@@ -50,6 +50,119 @@ export type Database = {
         }
         Relationships: []
       }
+      chatbot_knowledge: {
+        Row: {
+          answer: string
+          category: string
+          confidence_threshold: number | null
+          created_at: string
+          id: string
+          intent: string
+          keywords: string[] | null
+          question: string
+        }
+        Insert: {
+          answer: string
+          category: string
+          confidence_threshold?: number | null
+          created_at?: string
+          id?: string
+          intent: string
+          keywords?: string[] | null
+          question: string
+        }
+        Update: {
+          answer?: string
+          category?: string
+          confidence_threshold?: number | null
+          created_at?: string
+          id?: string
+          intent?: string
+          keywords?: string[] | null
+          question?: string
+        }
+        Relationships: []
+      }
+      educational_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      educational_content: {
+        Row: {
+          category_id: string | null
+          content: Json
+          content_type: string
+          created_at: string
+          difficulty_level: string
+          estimated_reading_time: number | null
+          id: string
+          is_published: boolean
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          content: Json
+          content_type?: string
+          created_at?: string
+          difficulty_level?: string
+          estimated_reading_time?: number | null
+          id?: string
+          is_published?: boolean
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          content?: Json
+          content_type?: string
+          created_at?: string
+          difficulty_level?: string
+          estimated_reading_time?: number | null
+          id?: string
+          is_published?: boolean
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "educational_content_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "educational_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -127,6 +240,47 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      user_educational_progress: {
+        Row: {
+          completed_at: string | null
+          content_id: string | null
+          created_at: string
+          id: string
+          progress_percentage: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          content_id?: string | null
+          created_at?: string
+          id?: string
+          progress_percentage?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          content_id?: string | null
+          created_at?: string
+          id?: string
+          progress_percentage?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_educational_progress_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "educational_content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
