@@ -9,6 +9,10 @@ import Auth from "./pages/Auth";
 import Submit from "./pages/Submit";
 import Analytics from "./pages/Analytics";
 import Education from "./pages/Education";
+import Assistant from "./pages/Assistant";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Cookies from "./pages/Cookies";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +30,10 @@ const App = () => (
             <Route path="/submit" element={<Submit />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/education" element={<Education />} />
+            <Route path="/assistant" element={<Assistant />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/cookies" element={<Cookies />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

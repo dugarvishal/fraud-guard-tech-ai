@@ -5,28 +5,28 @@ const Footer = () => {
     {
       title: "Platform",
       links: [
-        { name: "Submit URL", href: "#submit" },
-        { name: "Analytics Dashboard", href: "#analytics" },
-        { name: "AI Assistant", href: "#assistant" },
-        { name: "API Access", href: "#api" }
+        { name: "Submit URL", href: "/submit" },
+        { name: "Analytics Dashboard", href: "/analytics" },
+        { name: "AI Assistant", href: "/assistant" },
+        { name: "API Access", href: "/api" }
       ]
     },
     {
       title: "Resources",
       links: [
-        { name: "Education Center", href: "#education" },
-        { name: "Threat Intelligence", href: "#intelligence" },
-        { name: "Security Blog", href: "#blog" },
-        { name: "Help Center", href: "#help" }
+        { name: "Education Center", href: "/education" },
+        { name: "Threat Intelligence", href: "/intelligence" },
+        { name: "Security Blog", href: "/blog" },
+        { name: "Help Center", href: "/help" }
       ]
     },
     {
       title: "Company",
       links: [
-        { name: "About Us", href: "#about" },
-        { name: "Privacy Policy", href: "#privacy" },
-        { name: "Terms of Service", href: "#terms" },
-        { name: "Contact", href: "#contact" }
+        { name: "About Us", href: "/about" },
+        { name: "Privacy Policy", href: "/privacy" },
+        { name: "Terms of Service", href: "/terms" },
+        { name: "Contact", href: "/contact" }
       ]
     }
   ];
@@ -85,16 +85,16 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="mt-12 pt-8 border-t flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-muted-foreground text-sm">
-            © 2024 FraudGuard AI. All rights reserved. Protecting your digital world.
+            © 2025 FraudGuard AI. All rights reserved. Protecting your digital world.
           </p>
           <div className="flex space-x-6">
-            <a href="#privacy" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
+            <a href="/privacy" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
               Privacy
             </a>
-            <a href="#terms" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
+            <a href="/terms" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
               Terms
             </a>
-            <a href="#cookies" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
+            <a href="/cookies" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
               Cookies
             </a>
           </div>
