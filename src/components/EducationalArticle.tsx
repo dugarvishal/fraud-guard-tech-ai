@@ -159,8 +159,11 @@ const EducationalArticle = ({ content, userProgress, onBack, onProgressUpdate }:
             ${content.content.checklist ? `
               <h2>Security Checklist</h2>
               <div class="checklist">
-                ${content.content.checklist.map((item: string) => `
-                  <div class="checklist-item">☐ ${item}</div>
+                ${content.content.checklist.map((item: any) => `
+                  <div class="checklist-item">
+                    ☐ <strong>${typeof item === 'string' ? item : item.item}</strong>
+                    ${typeof item === 'object' && item.description ? `<br><em>${item.description}</em>` : ''}
+                  </div>
                 `).join('')}
               </div>
             ` : ''}
@@ -300,7 +303,7 @@ const EducationalArticle = ({ content, userProgress, onBack, onProgressUpdate }:
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {content.content.checklist.map((item: string, index: number) => (
+                {content.content.checklist.map((item: any, index: number) => (
                   <div key={index} className="flex items-start space-x-3">
                     <Checkbox
                       id={`checklist-${index}`}
@@ -308,14 +311,21 @@ const EducationalArticle = ({ content, userProgress, onBack, onProgressUpdate }:
                       onCheckedChange={(checked) => handleChecklistChange(index, checked as boolean)}
                       className="mt-1"
                     />
-                    <Label
-                      htmlFor={`checklist-${index}`}
-                      className={`text-sm leading-relaxed cursor-pointer ${
-                        checklistProgress[index] ? 'line-through text-muted-foreground' : ''
-                      }`}
-                    >
-                      {item}
-                    </Label>
+                    <div className="flex flex-col">
+                      <Label
+                        htmlFor={`checklist-${index}`}
+                        className={`text-sm font-medium leading-relaxed cursor-pointer ${
+                          checklistProgress[index] ? 'line-through text-muted-foreground' : ''
+                        }`}
+                      >
+                        {typeof item === 'string' ? item : item.item}
+                      </Label>
+                      {typeof item === 'object' && item.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
