@@ -15,6 +15,7 @@ const Header = () => {
     { name: "Submit URL", href: "/submit" },
     { name: "Analytics", href: "/analytics", authRequired: true },
     { name: "Education", href: "/education" },
+    { name: "Documentation", href: "/documentation" },
     { name: "AI Assistant", href: "/assistant" },
   ];
 
