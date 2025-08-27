@@ -297,7 +297,7 @@ const ChatBot = ({ onClose }: ChatBotProps) => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTop = 0;
+        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
   };
@@ -306,7 +306,7 @@ const ChatBot = ({ onClose }: ChatBotProps) => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
       }
     }
   };
@@ -330,7 +330,7 @@ const ChatBot = ({ onClose }: ChatBotProps) => {
         
         <CardContent className="flex-1 flex flex-col p-0">
           <div className="relative flex-1">
-            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+            <ScrollArea className="h-[400px] p-4" ref={scrollAreaRef}>
               {/* Scroll controls */}
               <div className="absolute top-4 right-4 z-10 flex flex-col gap-1">
                 <Button

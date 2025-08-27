@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Shield, Users, Globe } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const CTASection = () => {
@@ -39,38 +39,6 @@ const CTASection = () => {
           </CardContent>
         </Card>
 
-        {/* Trust Indicators */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="text-center bg-card/50 backdrop-blur-sm border-security-primary/10">
-            <CardContent className="p-6 space-y-3">
-              <div className="mx-auto w-12 h-12 rounded-lg bg-gradient-hero flex items-center justify-center">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-foreground">Enterprise Security</h3>
-              <p className="text-sm text-muted-foreground">Bank-level encryption and security standards</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="text-center bg-card/50 backdrop-blur-sm border-security-primary/10">
-            <CardContent className="p-6 space-y-3">
-              <div className="mx-auto w-12 h-12 rounded-lg bg-gradient-hero flex items-center justify-center">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-foreground">Trusted by Thousands</h3>
-              <p className="text-sm text-muted-foreground">Join our growing community of protected users</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="text-center bg-card/50 backdrop-blur-sm border-security-primary/10">
-            <CardContent className="p-6 space-y-3">
-              <div className="mx-auto w-12 h-12 rounded-lg bg-gradient-hero flex items-center justify-center">
-                <Globe className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-foreground">Global Protection</h3>
-              <p className="text-sm text-muted-foreground">Worldwide threat intelligence network</p>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </section>
   );
