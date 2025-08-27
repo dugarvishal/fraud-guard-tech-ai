@@ -299,7 +299,7 @@ class AIFraudAnalyzer {
 
   private generateFinalAnalysis(url: string, analysis: any): AIAnalysisResult {
     let riskScore = 0;
-    const suspiciousPatterns: { pattern: string; severity: string; confidence: number }[] = [];
+    const suspiciousPatterns: { pattern: string; severity: string; confidence: number; explanation: string }[] = [];
     const threatCategories: string[] = [];
     const recommendations: string[] = [];
 
@@ -405,7 +405,16 @@ class AIFraudAnalyzer {
         contentAnalysis: analysis.contentAnalysis,
         structuralAnalysis: analysis.structuralAnalysis
       },
-      recommendations: [...new Set(recommendations)]
+      recommendations: [...new Set(recommendations)],
+      explainability: {
+        primaryRiskFactors: threatCategories,
+        nlpFlags: [],
+        technicalFlags: suspiciousPatterns.map(p => ({
+          flag: p.pattern,
+          severity: p.severity,
+          details: p.explanation
+        }))
+      }
     };
   }
 }

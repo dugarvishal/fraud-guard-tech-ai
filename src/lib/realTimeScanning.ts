@@ -56,8 +56,8 @@ export class RealTimeScanEngine {
 
   async scanURL(
     url: string, 
-    options: ScanOptions = {},
-    content?: string
+    content?: string,
+    options: ScanOptions = {}
   ): Promise<ScanResult> {
     // Check if scan is already in progress
     if (this.scanQueue.has(url)) {
@@ -88,7 +88,7 @@ export class RealTimeScanEngine {
 
   private async performScan(
     url: string, 
-    content?: string, 
+    content: string | undefined, 
     options: ScanOptions
   ): Promise<ScanResult> {
     await this.initialize();
