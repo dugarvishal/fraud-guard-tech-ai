@@ -25,6 +25,7 @@ import LoginBenefitsBanner from '@/components/LoginBenefitsBanner';
 
 interface AnalyticsData {
   submissions: any[];
+  threatBreakdown: { name: string; value: number; color: string; description?: string }[];
   threatCategoryBreakdown: { name: string; value: number; color: string; description: string }[];
   riskBreakdown: { name: string; value: number; color: string }[];
   trendsData: { date: string; submissions: number; highRisk: number; categories: { [key: string]: number } }[];
@@ -73,6 +74,8 @@ const Analytics = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRisk, setFilterRisk] = useState('all');
   const [showBenefitsBanner, setShowBenefitsBanner] = useState(!user);
+  const [selectedThreatCategory, setSelectedThreatCategory] = useState<string | null>(null);
+  const [showDetailedThreatAnalysis, setShowDetailedThreatAnalysis] = useState(false);
 
   useEffect(() => {
     loadAnalyticsData();
@@ -189,6 +192,7 @@ const Analytics = () => {
 
     return {
       submissions,
+      threatBreakdown: threatCategoryBreakdown,
       threatCategoryBreakdown,
       riskBreakdown,
       trendsData,
@@ -429,6 +433,46 @@ const Analytics = () => {
             <TabsContent value="overview" className="space-y-6">
               {/* Charts Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Threat Category Distribution */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChartIcon className="h-5 w-5" />
+                      Threat Category Distribution
+                    </CardTitle>
+                    <CardDescription>
+                      Click on any category to see detailed analysis
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={data?.threatBreakdown || []}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => 
+                            `${name} ${(percent * 100).toFixed(0)}%`
+                          }
+                          onClick={(entry) => {
+                            setSelectedThreatCategory(entry.name);
+                            setShowDetailedThreatAnalysis(true);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {data?.threatBreakdown.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
 
                 {/* Trends Line Chart */}
                 <Card>
