@@ -1,63 +1,156 @@
-// Enhanced AI Analysis Engine for Fraud Detection
-// This module provides local AI/ML capabilities for analyzing URLs and detecting fraud patterns
+// Enhanced AI Analysis Engine for Comprehensive Fraud Detection
+// This module provides local AI/ML capabilities for analyzing URLs, apps, and detecting fraud patterns
+// Features: WHOIS/DNS analysis, Computer Vision, Advanced NLP, Real-time alerts
 
 import { pipeline, env } from '@huggingface/transformers';
+import { supabase } from '@/integrations/supabase/client';
 
-// Configure transformers to work in browser environment
-env.allowRemoteModels = false;
+// Configure transformers for optimal browser performance
+env.allowRemoteModels = true;
 env.allowLocalModels = true;
+env.useBrowserCache = true;
 
 export interface AIAnalysisResult {
   riskScore: number;
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
   confidence: number;
   threatCategories: string[];
-  suspiciousPatterns: { pattern: string; severity: string; confidence: number }[];
+  suspiciousPatterns: { pattern: string; severity: string; confidence: number; explanation: string }[];
   technicalAnalysis: {
     domainReputation: number;
     contentAnalysis: any;
     structuralAnalysis: any;
+    whoisData?: WhoisData;
+    dnsAnalysis?: DNSAnalysis;
+    visualAnalysis?: VisualAnalysis;
+    appMetadata?: AppMetadata;
   };
   recommendations: string[];
+  explainability: {
+    primaryRiskFactors: string[];
+    visualComparisons?: { brandName: string; similarity: number; screenshot?: string }[];
+    nlpFlags: { flag: string; confidence: number; explanation: string }[];
+    technicalFlags: { flag: string; severity: string; details: string }[];
+  };
+}
+
+export interface WhoisData {
+  domain: string;
+  registrar?: string;
+  creationDate?: Date;
+  expirationDate?: Date;
+  registrantCountry?: string;
+  privacyProtection: boolean;
+  age: number;
+  suspiciousIndicators: string[];
+}
+
+export interface DNSAnalysis {
+  mxRecords: string[];
+  ipReputation: number;
+  subdomainCount: number;
+  suspiciousSubdomains: string[];
+  dnsSecEnabled: boolean;
+  suspiciousPatterns: string[];
+}
+
+export interface VisualAnalysis {
+  screenshotUrl?: string;
+  brandSimilarities: { brand: string; similarity: number }[];
+  uiElements: string[];
+  layoutSuspicion: number;
+  logoDetections: { brand: string; confidence: number }[];
+}
+
+export interface AppMetadata {
+  appId: string;
+  platform: 'android' | 'ios';
+  developerName?: string;
+  permissions: string[];
+  suspiciousPermissions: string[];
+  permissionRiskScore: number;
+  appStoreRating?: number;
+  installCount?: string;
+  lastUpdated?: Date;
 }
 
 class AIFraudAnalyzer {
   private textClassifier: any = null;
   private embeddingsModel: any = null;
+  private imageClassifier: any = null;
+  private scamDetector: any = null;
   private initialized = false;
+  private threatIntelligence: Map<string, any> = new Map();
 
   async initialize() {
     if (this.initialized) return;
 
     try {
-      // Initialize text classification model for phishing detection
-      this.textClassifier = await pipeline(
+      console.log('Initializing enhanced AI fraud detection models...');
+      
+      // Initialize advanced text classification for scam detection
+      this.scamDetector = await pipeline(
         'text-classification',
-        'microsoft/DialoGPT-medium',
+        'unitary/toxic-bert',
         { device: 'webgpu' }
       );
 
-      // Initialize embeddings model for content analysis
+      // Initialize embeddings model for semantic analysis
       this.embeddingsModel = await pipeline(
         'feature-extraction',
         'sentence-transformers/all-MiniLM-L6-v2',
         { device: 'webgpu' }
       );
 
+      // Initialize computer vision model for brand similarity
+      this.imageClassifier = await pipeline(
+        'image-classification',
+        'microsoft/resnet-50',
+        { device: 'webgpu' }
+      );
+
+      // Load threat intelligence data
+      await this.loadThreatIntelligence();
+
       this.initialized = true;
-      console.log('AI Fraud Analyzer initialized successfully');
+      console.log('Enhanced AI Fraud Analyzer initialized successfully');
     } catch (error) {
       console.warn('GPU not available, falling back to CPU');
       try {
-        this.textClassifier = await pipeline(
+        this.scamDetector = await pipeline(
           'text-classification',
-          'microsoft/DialoGPT-medium'
+          'unitary/toxic-bert'
         );
+        this.embeddingsModel = await pipeline(
+          'feature-extraction',
+          'sentence-transformers/all-MiniLM-L6-v2'
+        );
+        await this.loadThreatIntelligence();
         this.initialized = true;
       } catch (cpuError) {
         console.error('Failed to initialize AI models:', cpuError);
-        // Fallback to rule-based analysis
+        // Continue with rule-based analysis only
+        this.initialized = true;
       }
+    }
+  }
+
+  private async loadThreatIntelligence() {
+    try {
+      const { data, error } = await supabase
+        .from('threat_intelligence')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      
+      data?.forEach(threat => {
+        this.threatIntelligence.set(threat.indicator_value, threat);
+      });
+      
+      console.log(`Loaded ${data?.length || 0} threat intelligence indicators`);
+    } catch (error) {
+      console.warn('Failed to load threat intelligence:', error);
     }
   }
 
@@ -216,7 +309,8 @@ class AIFraudAnalyzer {
       suspiciousPatterns.push({
         pattern: 'Recently registered domain',
         severity: 'high',
-        confidence: 0.9
+        confidence: 0.9,
+        explanation: 'Domain was registered less than 90 days ago, which is common for phishing sites'
       });
       threatCategories.push('New Domain');
       recommendations.push('Exercise caution with recently registered domains');
@@ -227,7 +321,8 @@ class AIFraudAnalyzer {
       suspiciousPatterns.push({
         pattern: 'Homograph attack detected',
         severity: 'critical',
-        confidence: 0.95
+        confidence: 0.95,
+        explanation: 'Domain uses characters that look similar to legitimate domains to deceive users'
       });
       threatCategories.push('Homograph Attack');
       recommendations.push('Verify domain spelling carefully');
@@ -239,7 +334,8 @@ class AIFraudAnalyzer {
       suspiciousPatterns.push({
         pattern: 'IP address instead of domain',
         severity: 'medium',
-        confidence: 0.8
+        confidence: 0.8,
+        explanation: 'Website uses IP address instead of domain name, which can hide true destination'
       });
       threatCategories.push('Direct IP Access');
     }
@@ -249,7 +345,8 @@ class AIFraudAnalyzer {
       suspiciousPatterns.push({
         pattern: 'Insecure HTTP protocol',
         severity: 'medium',
-        confidence: 1.0
+        confidence: 1.0,
+        explanation: 'Website does not use HTTPS encryption, making data transmission vulnerable'
       });
       threatCategories.push('Insecure Protocol');
       recommendations.push('Avoid entering sensitive information on HTTP sites');
@@ -261,7 +358,8 @@ class AIFraudAnalyzer {
       suspiciousPatterns.push({
         pattern: 'Multiple phishing keywords detected',
         severity: 'high',
-        confidence: 0.85
+        confidence: 0.85,
+        explanation: 'Content contains multiple words commonly used in phishing attempts'
       });
       threatCategories.push('Phishing Content');
       recommendations.push('Be wary of urgent language and requests for personal information');
@@ -273,7 +371,8 @@ class AIFraudAnalyzer {
       suspiciousPatterns.push({
         pattern: 'Domain found on blacklists',
         severity: 'critical',
-        confidence: 0.98
+        confidence: 0.98,
+        explanation: 'Domain appears on known threat intelligence blacklists'
       });
       threatCategories.push('Blacklisted Domain');
       recommendations.push('Avoid this website - known malicious domain');
