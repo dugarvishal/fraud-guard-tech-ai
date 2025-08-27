@@ -233,6 +233,7 @@ export function BatchUploadForm() {
           const submissionData = {
             user_id: user?.id || null,
             session_id: sessionId,
+            batch_id: batch.id,
             url: item.url,
             submission_type: "url" as const,
             risk_score: analysisResult.riskScore,

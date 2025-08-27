@@ -471,6 +471,7 @@ export type Database = {
           analysis_results: Json | null
           analysis_status: string
           app_store_link: string | null
+          batch_id: string | null
           classification_confidence: number | null
           created_at: string
           file_name: string | null
@@ -492,6 +493,7 @@ export type Database = {
           analysis_results?: Json | null
           analysis_status?: string
           app_store_link?: string | null
+          batch_id?: string | null
           classification_confidence?: number | null
           created_at?: string
           file_name?: string | null
@@ -513,6 +515,7 @@ export type Database = {
           analysis_results?: Json | null
           analysis_status?: string
           app_store_link?: string | null
+          batch_id?: string | null
           classification_confidence?: number | null
           created_at?: string
           file_name?: string | null
@@ -530,7 +533,15 @@ export type Database = {
           url?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "url_submissions_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batch_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_educational_progress: {
         Row: {

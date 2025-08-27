@@ -24,15 +24,18 @@ import Header from '@/components/Header';
 import LoginBenefitsBanner from '@/components/LoginBenefitsBanner';
 import { ThreatCategoryModal } from '@/components/ThreatCategoryModal';
 import { DetailedReportModal } from '@/components/DetailedReportModal';
+import { BatchSubmissionRow } from '@/components/BatchSubmissionRow';
 
 interface AnalyticsData {
   submissions: any[];
+  batches: any[];
   threatBreakdown: { name: string; value: number; color: string; description?: string }[];
   threatCategoryBreakdown: { name: string; value: number; color: string; description: string }[];
   riskBreakdown: { name: string; value: number; color: string }[];
   trendsData: { date: string; submissions: number; highRisk: number; categories: { [key: string]: number } }[];
   totalStats: {
     totalSubmissions: number;
+    totalBatches: number;
     averageRisk: number;
     highRiskCount: number;
     successRate: number;
@@ -93,27 +96,50 @@ const Analytics = () => {
   const loadAnalyticsData = async () => {
     setLoading(true);
     try {
-      let query = supabase.from('url_submissions').select('*');
+      // Load URL submissions with batch information
+      let submissionsQuery = supabase.from('url_submissions').select(`
+        *,
+        batch_submissions!batch_id (
+          id,
+          file_name,
+          total_urls,
+          processed_urls,
+          status,
+          created_at
+        )
+      `);
       
       // Filter by user if authenticated
       if (user) {
-        query = query.eq('user_id', user.id);
+        submissionsQuery = submissionsQuery.eq('user_id', user.id);
       } else {
         // For anonymous users, show aggregated public data
-        query = query.not('risk_score', 'is', null);
+        submissionsQuery = submissionsQuery.not('risk_score', 'is', null);
       }
 
       // Apply time range filter
       const daysAgo = parseInt(timeRange.replace('d', ''));
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysAgo);
-      query = query.gte('created_at', startDate.toISOString());
+      submissionsQuery = submissionsQuery.gte('created_at', startDate.toISOString());
 
-      const { data: submissions, error } = await query;
-      if (error) throw error;
+      const { data: submissions, error: submissionsError } = await submissionsQuery;
+      if (submissionsError) throw submissionsError;
 
-      // Process data for analytics
-      const processedData = processAnalyticsData(submissions || []);
+      // Load batch submissions separately
+      let batchQuery = supabase.from('batch_submissions').select('*');
+      if (user) {
+        batchQuery = batchQuery.eq('user_id', user.id);
+      } else {
+        batchQuery = batchQuery.not('session_id', 'is', null);
+      }
+      batchQuery = batchQuery.gte('created_at', startDate.toISOString());
+
+      const { data: batches, error: batchError } = await batchQuery;
+      if (batchError) throw batchError;
+
+      // Process data for analytics including batch information
+      const processedData = processAnalyticsData(submissions || [], batches || []);
       setData(processedData);
     } catch (error) {
       console.error('Error loading analytics:', error);
@@ -127,7 +153,7 @@ const Analytics = () => {
     }
   };
 
-  const processAnalyticsData = (submissions: any[]): AnalyticsData => {
+  const processAnalyticsData = (submissions: any[], batches: any[]): AnalyticsData => {
     // Threat category breakdown
     const categoryCounts: { [key: string]: number } = {};
     submissions.forEach(sub => {
@@ -215,12 +241,14 @@ const Analytics = () => {
 
     return {
       submissions,
+      batches,
       threatBreakdown: threatCategoryBreakdown,
       threatCategoryBreakdown,
       riskBreakdown,
       trendsData,
       totalStats: {
         totalSubmissions,
+        totalBatches: batches.length,
         averageRisk: Math.round(averageRisk),
         highRiskCount,
         successRate: Math.round(successRate),
@@ -591,12 +619,46 @@ const Analytics = () => {
                 </Button>
               </div>
 
-              {/* Detailed Submissions Table */}
+              {/* Batch Submissions */}
+              {data?.batches && data.batches.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Batch Submissions ({data.batches.length})</CardTitle>
+                    <CardDescription>
+                      CSV file uploads with bulk URL analysis results
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead colSpan={7}>Batch Analysis Results</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.batches.map((batch) => {
+                          const batchSubmissions = data.submissions.filter(s => s.batch_id === batch.id);
+                          return (
+                            <BatchSubmissionRow
+                              key={batch.id}
+                              batch={batch}
+                              submissions={batchSubmissions}
+                              onRowClick={handleRowClick}
+                            />
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Individual Submissions Table */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Submission History ({filteredSubmissions.length})</CardTitle>
+                  <CardTitle>Individual Submissions ({filteredSubmissions.filter(s => !s.batch_id).length})</CardTitle>
                   <CardDescription>
-                    Click on any row to view detailed analysis report
+                    Single URL and app analysis results
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -604,6 +666,7 @@ const Analytics = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>URL</TableHead>
+                        <TableHead>Type</TableHead>
                         <TableHead>Threat Category</TableHead>
                         <TableHead>Risk Score</TableHead>
                         <TableHead>Risk Level</TableHead>
@@ -611,7 +674,7 @@ const Analytics = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredSubmissions.map((submission) => (
+                      {filteredSubmissions.filter(submission => !submission.batch_id).map((submission) => (
                         <TableRow 
                           key={submission.id}
                           className="cursor-pointer hover:bg-muted/50 transition-colors"
@@ -619,6 +682,11 @@ const Analytics = () => {
                         >
                           <TableCell className="font-medium max-w-xs truncate">
                             {submission.url}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {submission.submission_type || 'URL'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">
@@ -651,9 +719,9 @@ const Analytics = () => {
                     </TableBody>
                   </Table>
                   
-                  {filteredSubmissions.length === 0 && (
+                  {filteredSubmissions.filter(s => !s.batch_id).length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
-                      No submissions found matching your criteria.
+                      No individual submissions found matching your criteria.
                     </div>
                   )}
                 </CardContent>
