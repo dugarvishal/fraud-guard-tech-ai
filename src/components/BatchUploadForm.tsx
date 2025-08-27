@@ -170,33 +170,53 @@ export function BatchUploadForm() {
   const processBatch = async () => {
     if (!csvData || csvData.data.length === 0) return;
 
+    console.log("🚀 Starting batch processing", {
+      totalUrls: csvData.data.length,
+      user: user?.id ? "authenticated" : "anonymous",
+      csvData: csvData.data.slice(0, 3) // Log first 3 URLs for debugging
+    });
+
     try {
       setIsProcessing(true);
       setProcessingProgress(0);
 
       // Generate session ID for anonymous users
       const sessionId = user ? null : generateSessionId();
+      console.log("📝 Session info", { userId: user?.id, sessionId });
 
       // Create batch submission record
+      console.log("📤 Creating batch submission record...");
+      const batchInsertData = {
+        user_id: user?.id || null,
+        session_id: sessionId,
+        file_name: form.getValues("file").name,
+        total_urls: csvData.data.length,
+        status: "processing" as const,
+      };
+      console.log("📝 Batch insert data:", batchInsertData);
+
       const { data: batch, error: batchError } = await supabase
         .from("batch_submissions")
-        .insert({
-          user_id: user?.id || null,
-          session_id: sessionId,
-          file_name: form.getValues("file").name,
-          total_urls: csvData.data.length,
-          status: "processing",
-        })
+        .insert(batchInsertData)
         .select()
         .single();
 
-      if (batchError) throw batchError;
+      if (batchError) {
+        console.error("❌ Batch creation failed:", batchError);
+        throw batchError;
+      }
+      
+      console.log("✅ Batch created successfully:", batch);
       setBatchId(batch.id);
 
       // Process URLs sequentially
       const updatedResults = [...results];
+      let successCount = 0;
+      let failureCount = 0;
+
       for (let i = 0; i < csvData.data.length; i++) {
         const item = csvData.data[i];
+        console.log(`🔍 Processing URL ${i + 1}/${csvData.data.length}:`, item.url);
         
         // Update status to analyzing
         updatedResults[i].status = "analyzing";
@@ -204,28 +224,42 @@ export function BatchUploadForm() {
 
         try {
           // Simulate analysis for batch processing
+          console.log(`🧠 Running analysis for URL ${i + 1}...`);
           const analysisResult = await simulateUrlAnalysis();
+          console.log(`📊 Analysis result for URL ${i + 1}:`, analysisResult);
+          
+          // Prepare submission data
+          const submissionData = {
+            user_id: user?.id || null,
+            session_id: sessionId,
+            url: item.url,
+            submission_type: "url" as const,
+            risk_score: analysisResult.riskScore,
+            risk_level: analysisResult.riskLevel,
+            threat_category: analysisResult.threatCategory,
+            primary_detection_reason: analysisResult.primaryReason,
+            analysis_status: "completed" as const,
+            analysis_results: analysisResult,
+            classification_confidence: analysisResult.confidence,
+          };
+          
+          console.log(`📤 Inserting submission ${i + 1}:`, submissionData);
           
           // Store individual URL submission
           const { data: submission, error: submissionError } = await supabase
             .from("url_submissions")
-            .insert({
-              user_id: user?.id || null,
-              session_id: sessionId,
-              url: item.url,
-              submission_type: "url",
-              risk_score: analysisResult.riskScore,
-              risk_level: analysisResult.riskLevel,
-              threat_category: analysisResult.threatCategory,
-              primary_detection_reason: analysisResult.primaryReason,
-              analysis_status: "completed",
-              analysis_results: analysisResult,
-              classification_confidence: analysisResult.confidence,
-            })
+            .insert(submissionData)
             .select()
             .single();
 
-          if (submissionError) throw submissionError;
+          if (submissionError) {
+            console.error(`❌ Submission ${i + 1} failed:`, submissionError);
+            console.error("Full error object:", JSON.stringify(submissionError, null, 2));
+            throw submissionError;
+          }
+
+          console.log(`✅ Submission ${i + 1} successful:`, submission.id);
+          successCount++;
 
           // Update result
           updatedResults[i] = {
@@ -237,6 +271,14 @@ export function BatchUploadForm() {
           };
 
         } catch (error) {
+          console.error(`❌ URL ${i + 1} processing failed:`, error);
+          console.error("Error details:", {
+            message: error instanceof Error ? error.message : "Unknown error",
+            stack: error instanceof Error ? error.stack : undefined,
+            fullError: error
+          });
+          
+          failureCount++;
           updatedResults[i] = {
             ...updatedResults[i],
             status: "failed",
@@ -247,27 +289,50 @@ export function BatchUploadForm() {
         setResults([...updatedResults]);
         setProcessingProgress(((i + 1) / csvData.data.length) * 100);
 
+        // Update batch processed count after each URL
+        console.log(`📊 Updating batch progress: ${i + 1}/${csvData.data.length} processed`);
+        await supabase
+          .from("batch_submissions")
+          .update({ processed_urls: i + 1 })
+          .eq("id", batch.id);
+
         // Small delay to prevent overwhelming the system
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Update batch submission status
-      const completedCount = updatedResults.filter(r => r.status === "completed").length;
-      await supabase
+      // Final batch submission status update
+      console.log(`📋 Final batch stats: ${successCount} success, ${failureCount} failures`);
+      const finalStatus = successCount === csvData.data.length ? "completed" : 
+                         successCount > 0 ? "partial" : "failed";
+      
+      console.log("📤 Updating final batch status to:", finalStatus);
+      const { error: updateError } = await supabase
         .from("batch_submissions")
         .update({
-          processed_urls: completedCount,
-          status: completedCount === csvData.data.length ? "completed" : "partial",
+          processed_urls: successCount,
+          status: finalStatus,
         })
         .eq("id", batch.id);
 
+      if (updateError) {
+        console.error("❌ Failed to update batch status:", updateError);
+      } else {
+        console.log("✅ Batch status updated successfully");
+      }
+
       toast({
         title: "Batch Processing Complete",
-        description: `${completedCount}/${csvData.data.length} URLs analyzed successfully`,
+        description: `${successCount}/${csvData.data.length} URLs analyzed successfully`,
       });
 
     } catch (error) {
-      console.error("Batch processing failed:", error);
+      console.error("💥 Batch processing failed:", error);
+      console.error("Full error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        fullError: error
+      });
+      
       toast({
         title: "Batch Processing Failed",
         description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -275,6 +340,7 @@ export function BatchUploadForm() {
       });
     } finally {
       setIsProcessing(false);
+      console.log("🏁 Batch processing finished");
     }
   };
 
