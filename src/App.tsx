@@ -13,6 +13,13 @@ import Assistant from "./pages/Assistant";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Cookies from "./pages/Cookies";
+import Blog from "./pages/Blog";
+import API from "./pages/API";
+import Intelligence from "./pages/Intelligence";
+import Help from "./pages/Help";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +38,13 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/education" element={<Education />} />
             <Route path="/assistant" element={<Assistant />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/api" element={<API />} />
+            <Route path="/intelligence" element={<Intelligence />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/history" element={<History />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/cookies" element={<Cookies />} />

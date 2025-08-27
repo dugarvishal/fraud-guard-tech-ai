@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Send, Bot, User, Mic, MicOff, Volume2 } from "lucide-react";
+import { X, Send, Bot, User, Mic, MicOff, Volume2, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -293,6 +293,24 @@ const ChatBot = ({ onClose }: ChatBotProps) => {
     }
   };
 
+  const scrollToTop = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = 0;
+      }
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  };
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -311,7 +329,29 @@ const ChatBot = ({ onClose }: ChatBotProps) => {
         </CardHeader>
         
         <CardContent className="flex-1 flex flex-col p-0">
-          <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+          <div className="relative flex-1">
+            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+              {/* Scroll controls */}
+              <div className="absolute top-4 right-4 z-10 flex flex-col gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
+                  onClick={scrollToTop}
+                  title="Scroll to top"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
+                  onClick={scrollToBottom}
+                  title="Scroll to bottom"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
             <div className="space-y-4">
               {messages.map((message) => (
                 <div
@@ -397,7 +437,8 @@ const ChatBot = ({ onClose }: ChatBotProps) => {
                 </div>
               )}
             </div>
-          </ScrollArea>
+            </ScrollArea>
+          </div>
           
           <div className="border-t p-4">
             <form onSubmit={handleSubmit} className="flex gap-2">

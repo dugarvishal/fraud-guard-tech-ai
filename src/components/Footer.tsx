@@ -1,4 +1,5 @@
 import { Shield, Github, Twitter, Linkedin, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   const footerSections = [
@@ -69,12 +70,12 @@ const Footer = () => {
               <ul className="space-y-2">
                 {section.links.map((link) => (
                   <li key={link.name}>
-                    <a 
-                      href={link.href}
+                    <Link 
+                      to={link.href}
                       className="text-muted-foreground hover:text-security-primary transition-smooth"
                     >
                       {link.name}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -88,15 +89,15 @@ const Footer = () => {
             © 2025 FraudGuard AI. All rights reserved. Protecting your digital world.
           </p>
           <div className="flex space-x-6">
-            <a href="/privacy" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
+            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
               Privacy
-            </a>
-            <a href="/terms" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
+            </Link>
+            <Link to="/terms" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
               Terms
-            </a>
-            <a href="/cookies" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
+            </Link>
+            <Link to="/cookies" className="text-sm text-muted-foreground hover:text-security-primary transition-smooth">
               Cookies
-            </a>
+            </Link>
           </div>
         </div>
       </div>

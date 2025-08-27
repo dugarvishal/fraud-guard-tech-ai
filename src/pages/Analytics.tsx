@@ -154,10 +154,27 @@ const Analytics = () => {
   };
 
   const processAnalyticsData = (submissions: any[], batches: any[]): AnalyticsData => {
-    // Threat category breakdown
+    // Filter out submissions with unknown threat categories for individual submissions display
+    const filteredSubmissions = submissions.filter(sub => 
+      sub.threat_category && 
+      sub.threat_category !== 'Unknown' && 
+      sub.threat_category.trim() !== ''
+    );
+
+    // Threat category breakdown with category consolidation
     const categoryCounts: { [key: string]: number } = {};
-    submissions.forEach(sub => {
-      const category = sub.threat_category || 'Safe Content';
+    filteredSubmissions.forEach(sub => {
+      let category = sub.threat_category || 'Safe Content';
+      
+      // Consolidate similar categories to prevent overlapping in charts
+      if (category.toLowerCase().includes('phishing')) {
+        category = 'Phishing Domain';
+      } else if (category.toLowerCase().includes('malware')) {
+        category = 'Malware-laden';
+      } else if (category.toLowerCase().includes('fake') || category.toLowerCase().includes('clone')) {
+        category = 'Fake Website';
+      }
+      
       categoryCounts[category] = (categoryCounts[category] || 0) + 1;
     });
 
@@ -168,9 +185,9 @@ const Analytics = () => {
       description: getThreatCategoryDescription(category)
     }));
 
-    // Risk breakdown (legacy support)
+    // Risk breakdown (legacy support) - use filtered submissions
     const riskCounts = { low: 0, medium: 0, high: 0, critical: 0 };
-    submissions.forEach(sub => {
+    filteredSubmissions.forEach(sub => {
       if (sub.risk_level && riskCounts.hasOwnProperty(sub.risk_level)) {
         riskCounts[sub.risk_level as keyof typeof riskCounts]++;
       }
@@ -200,8 +217,8 @@ const Analytics = () => {
       });
     }
 
-    // Fill with actual data
-    submissions.forEach(sub => {
+    // Fill with actual data - use filtered submissions
+    filteredSubmissions.forEach(sub => {
       const date = new Date(sub.created_at).toISOString().split('T')[0];
       if (trendsMap.has(date)) {
         const entry = trendsMap.get(date);
@@ -210,17 +227,26 @@ const Analytics = () => {
           entry.highRisk++;
         }
         
-        const category = sub.threat_category || 'Safe Content';
+        let category = sub.threat_category || 'Safe Content';
+        // Apply same consolidation logic
+        if (category.toLowerCase().includes('phishing')) {
+          category = 'Phishing Domain';
+        } else if (category.toLowerCase().includes('malware')) {
+          category = 'Malware-laden';
+        } else if (category.toLowerCase().includes('fake') || category.toLowerCase().includes('clone')) {
+          category = 'Fake Website';
+        }
+        
         entry.categories[category] = (entry.categories[category] || 0) + 1;
       }
     });
 
     const trendsData = Array.from(trendsMap.values());
 
-    // Enhanced stats
-    const totalSubmissions = submissions.length;
-    const averageRisk = submissions.reduce((sum, sub) => sum + (sub.risk_score || 0), 0) / totalSubmissions || 0;
-    const highRiskCount = submissions.filter(sub => 
+    // Enhanced stats - use filtered submissions for calculations
+    const totalSubmissions = filteredSubmissions.length;
+    const averageRisk = filteredSubmissions.reduce((sum, sub) => sum + (sub.risk_score || 0), 0) / totalSubmissions || 0;
+    const highRiskCount = filteredSubmissions.filter(sub => 
       sub.risk_level === 'high' || sub.risk_level === 'critical'
     ).length;
     const successRate = ((totalSubmissions - highRiskCount) / totalSubmissions) * 100 || 0;
@@ -230,25 +256,25 @@ const Analytics = () => {
       .sort(([,a], [,b]) => b - a)[0];
     const topThreatCategory = topCategory ? topCategory[0] : 'Safe Content';
     
-    // Average confidence
-    const avgConfidence = submissions
+    // Average confidence - use filtered submissions
+    const avgConfidence = filteredSubmissions
       .filter(sub => sub.classification_confidence)
       .reduce((sum, sub) => sum + sub.classification_confidence, 0) / 
-      submissions.filter(sub => sub.classification_confidence).length || 0;
+      filteredSubmissions.filter(sub => sub.classification_confidence).length || 0;
 
     // Count unique threat types
     const threatTypesDetected = Object.keys(categoryCounts).filter(cat => cat !== 'Safe Content').length;
 
     return {
-      submissions,
-      batches,
+      submissions: filteredSubmissions, // Return filtered submissions
+      batches: batches.filter(batch => batch.status !== 'processing'), // Filter out processing batches
       threatBreakdown: threatCategoryBreakdown,
       threatCategoryBreakdown,
       riskBreakdown,
       trendsData,
       totalStats: {
         totalSubmissions,
-        totalBatches: batches.length,
+        totalBatches: batches.filter(batch => batch.status !== 'processing').length,
         averageRisk: Math.round(averageRisk),
         highRiskCount,
         successRate: Math.round(successRate),
