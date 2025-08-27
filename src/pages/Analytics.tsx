@@ -22,6 +22,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import Header from '@/components/Header';
 import LoginBenefitsBanner from '@/components/LoginBenefitsBanner';
+import { ThreatCategoryModal } from '@/components/ThreatCategoryModal';
+import { DetailedReportModal } from '@/components/DetailedReportModal';
 
 interface AnalyticsData {
   submissions: any[];
@@ -36,6 +38,7 @@ interface AnalyticsData {
     successRate: number;
     topThreatCategory: string;
     avgConfidence: number;
+    threatTypesDetected: number;
   };
 }
 
@@ -73,9 +76,12 @@ const Analytics = () => {
   const [timeRange, setTimeRange] = useState('30d');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRisk, setFilterRisk] = useState('all');
+  const [threatCategoryFilter, setThreatCategoryFilter] = useState('all');
   const [showBenefitsBanner, setShowBenefitsBanner] = useState(!user);
-  const [selectedThreatCategory, setSelectedThreatCategory] = useState<string | null>(null);
-  const [showDetailedThreatAnalysis, setShowDetailedThreatAnalysis] = useState(false);
+  const [selectedThreatCategory, setSelectedThreatCategory] = useState<any | null>(null);
+  const [threatCategoryModalOpen, setThreatCategoryModalOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   useEffect(() => {
     loadAnalyticsData();
@@ -150,26 +156,40 @@ const Analytics = () => {
       color: RISK_COLORS[level as keyof typeof RISK_COLORS]
     }));
 
-    // Enhanced trends data with categories
+    // Enhanced trends data with proper date range
+    const daysAgo = parseInt(timeRange.replace('d', ''));
     const trendsMap = new Map();
+    
+    // Initialize all dates in range
+    for (let i = daysAgo - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const displayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      trendsMap.set(dateStr, { 
+        date: displayDate, 
+        submissions: 0, 
+        highRisk: 0, 
+        categories: {} 
+      });
+    }
+
+    // Fill with actual data
     submissions.forEach(sub => {
       const date = new Date(sub.created_at).toISOString().split('T')[0];
-      if (!trendsMap.has(date)) {
-        trendsMap.set(date, { date, submissions: 0, highRisk: 0, categories: {} });
+      if (trendsMap.has(date)) {
+        const entry = trendsMap.get(date);
+        entry.submissions++;
+        if (sub.risk_level === 'high' || sub.risk_level === 'critical') {
+          entry.highRisk++;
+        }
+        
+        const category = sub.threat_category || 'Safe Content';
+        entry.categories[category] = (entry.categories[category] || 0) + 1;
       }
-      const entry = trendsMap.get(date);
-      entry.submissions++;
-      if (sub.risk_level === 'high' || sub.risk_level === 'critical') {
-        entry.highRisk++;
-      }
-      
-      const category = sub.threat_category || 'Safe Content';
-      entry.categories[category] = (entry.categories[category] || 0) + 1;
     });
 
-    const trendsData = Array.from(trendsMap.values()).sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    const trendsData = Array.from(trendsMap.values());
 
     // Enhanced stats
     const totalSubmissions = submissions.length;
@@ -190,6 +210,9 @@ const Analytics = () => {
       .reduce((sum, sub) => sum + sub.classification_confidence, 0) / 
       submissions.filter(sub => sub.classification_confidence).length || 0;
 
+    // Count unique threat types
+    const threatTypesDetected = Object.keys(categoryCounts).filter(cat => cat !== 'Safe Content').length;
+
     return {
       submissions,
       threatBreakdown: threatCategoryBreakdown,
@@ -202,7 +225,8 @@ const Analytics = () => {
         highRiskCount,
         successRate: Math.round(successRate),
         topThreatCategory,
-        avgConfidence: Math.round(avgConfidence * 100) / 100
+        avgConfidence: Math.round(avgConfidence * 100) / 100,
+        threatTypesDetected
       }
     };
   };
@@ -268,16 +292,34 @@ const Analytics = () => {
     const matchesSearch = !searchTerm || 
       sub.url?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRisk = filterRisk === 'all' || sub.risk_level === filterRisk;
-    return matchesSearch && matchesRisk;
+    const matchesThreatCategory = threatCategoryFilter === 'all' || sub.threat_category === threatCategoryFilter;
+    return matchesSearch && matchesRisk && matchesThreatCategory;
   }) || [];
+
+  const handleThreatCategoryClick = (categoryName: string) => {
+    const categorySubmissions = data?.submissions.filter(sub => sub.threat_category === categoryName) || [];
+    setSelectedThreatCategory({
+      category: categoryName,
+      count: categorySubmissions.length,
+      submissions: categorySubmissions
+    });
+    setThreatCategoryModalOpen(true);
+  };
+
+  const handleRowClick = (submission: any) => {
+    setSelectedReport(submission);
+    setReportModalOpen(true);
+  };
+
+  const uniqueThreatCategories = [...new Set(data?.submissions.map(sub => sub.threat_category).filter(Boolean))] as string[];
 
   const exportData = () => {
     if (!data) return;
     
     const csvContent = [
-      'URL,Risk Score,Risk Level,Analysis Date,Status',
+      'URL,Threat Category,Risk Score,Risk Level,Analysis Date',
       ...filteredSubmissions.map(sub => 
-        `"${sub.url}",${sub.risk_score},"${sub.risk_level}","${sub.created_at}","${sub.analysis_status}"`
+        `"${sub.url}","${sub.threat_category || 'Unknown'}",${sub.risk_score},"${sub.risk_level}","${sub.created_at}"`
       )
     ].join('\n');
     
@@ -365,11 +407,6 @@ const Analytics = () => {
                   </div>
                   <Activity className="h-8 w-8 text-primary" />
                 </div>
-                <div className="flex items-center mt-2 text-sm">
-                  <ArrowUpIcon className="h-4 w-4 text-primary mr-1" />
-                  <span className="text-primary">+12%</span>
-                  <span className="text-muted-foreground ml-1">vs last period</span>
-                </div>
               </CardContent>
             </Card>
 
@@ -397,11 +434,6 @@ const Analytics = () => {
                   </div>
                   <AlertTriangle className="h-8 w-8 text-destructive" />
                 </div>
-                <div className="flex items-center mt-2 text-sm">
-                  <ArrowDownIcon className="h-4 w-4 text-primary mr-1" />
-                  <span className="text-primary">-8%</span>
-                  <span className="text-muted-foreground ml-1">vs last period</span>
-                </div>
               </CardContent>
             </Card>
 
@@ -409,15 +441,10 @@ const Analytics = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
-                    <p className="text-2xl font-bold text-primary">{data?.totalStats.successRate || 0}%</p>
+                    <p className="text-sm font-medium text-muted-foreground">Threat Types Detected</p>
+                    <p className="text-2xl font-bold text-primary">{data?.totalStats.threatTypesDetected || 0}</p>
                   </div>
                   <CheckCircle className="h-8 w-8 text-primary" />
-                </div>
-                <div className="flex items-center mt-2 text-sm">
-                  <ArrowUpIcon className="h-4 w-4 text-primary mr-1" />
-                  <span className="text-primary">+5%</span>
-                  <span className="text-muted-foreground ml-1">vs last period</span>
                 </div>
               </CardContent>
             </Card>
@@ -458,11 +485,8 @@ const Analytics = () => {
                           label={({ name, percent }) => 
                             `${name} ${(percent * 100).toFixed(0)}%`
                           }
-                          onClick={(entry) => {
-                            setSelectedThreatCategory(entry.name);
-                            setShowDetailedThreatAnalysis(true);
-                          }}
-                          style={{ cursor: 'pointer' }}
+                          onClick={(entry) => handleThreatCategoryClick(entry.name)}
+                          className="cursor-pointer"
                         >
                           {data?.threatBreakdown.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -489,9 +513,16 @@ const Analytics = () => {
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart data={data?.trendsData || []}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 12 }}
+                          interval="preserveStartEnd"
+                        />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip 
+                          labelFormatter={(value) => `Date: ${value}`}
+                          formatter={(value, name) => [value, name]}
+                        />
                         <Area 
                           type="monotone" 
                           dataKey="submissions" 
@@ -499,6 +530,7 @@ const Analytics = () => {
                           stroke="hsl(var(--primary))" 
                           fill="hsl(var(--primary))" 
                           fillOpacity={0.3}
+                          name="Total Submissions"
                         />
                         <Area 
                           type="monotone" 
@@ -507,6 +539,7 @@ const Analytics = () => {
                           stroke="hsl(var(--destructive))" 
                           fill="hsl(var(--destructive))" 
                           fillOpacity={0.3}
+                          name="High Risk Detections"
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -540,6 +573,17 @@ const Analytics = () => {
                       <SelectItem value="critical">Critical</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Select value={threatCategoryFilter} onValueChange={setThreatCategoryFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {uniqueThreatCategories.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button onClick={exportData} variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-2" />
@@ -550,9 +594,9 @@ const Analytics = () => {
               {/* Detailed Submissions Table */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Submission History</CardTitle>
+                  <CardTitle>Submission History ({filteredSubmissions.length})</CardTitle>
                   <CardDescription>
-                    Detailed analysis results for all submissions
+                    Click on any row to view detailed analysis report
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -560,17 +604,26 @@ const Analytics = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>URL</TableHead>
+                        <TableHead>Threat Category</TableHead>
                         <TableHead>Risk Score</TableHead>
                         <TableHead>Risk Level</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Date</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredSubmissions.map((submission) => (
-                        <TableRow key={submission.id}>
+                        <TableRow 
+                          key={submission.id}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => handleRowClick(submission)}
+                        >
                           <TableCell className="font-medium max-w-xs truncate">
                             {submission.url}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {submission.threat_category || 'Unknown'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -585,19 +638,9 @@ const Analytics = () => {
                           </TableCell>
                           <TableCell>
                             <Badge 
-                              variant={submission.risk_level === 'low' ? 'default' : 'destructive'}
-                              className={
-                                submission.risk_level === 'low' 
-                                  ? 'bg-primary/10 text-primary border-primary/20' 
-                                  : ''
-                              }
+                              variant={submission.risk_score >= 80 ? 'destructive' : submission.risk_score >= 60 ? 'destructive' : 'secondary'}
                             >
                               {submission.risk_level?.toUpperCase() || 'UNKNOWN'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {submission.analysis_status}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
@@ -719,6 +762,18 @@ const Analytics = () => {
               </TabsContent>
             )}
           </Tabs>
+
+          <ThreatCategoryModal
+            isOpen={threatCategoryModalOpen}
+            onClose={() => setThreatCategoryModalOpen(false)}
+            categoryDetails={selectedThreatCategory}
+          />
+
+          <DetailedReportModal
+            isOpen={reportModalOpen}
+            onClose={() => setReportModalOpen(false)}
+            reportData={selectedReport}
+          />
         </div>
       </div>
     </div>
