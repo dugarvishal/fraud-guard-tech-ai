@@ -459,16 +459,50 @@ class AIFraudAnalyzer {
 // Singleton instance
 export const aiAnalyzer = new AIFraudAnalyzer();
 
+// Map AI threat categories to our specific classification system
+const mapThreatCategory = (threatCategories: string[]): string => {
+  if (!threatCategories || threatCategories.length === 0) return 'Safe Content';
+  
+  // Priority mapping - most severe threats first
+  for (const category of threatCategories) {
+    if (category.toLowerCase().includes('malware') || category.toLowerCase().includes('virus')) return 'Malware-laden';
+    if (category.toLowerCase().includes('phishing')) return 'Phishing Domain';
+    if (category.toLowerCase().includes('fake') || category.toLowerCase().includes('impersonation')) return 'Fake Website';
+    if (category.toLowerCase().includes('scam') && category.toLowerCase().includes('app')) return 'Scam Mobile App';
+    if (category.toLowerCase().includes('clone') || category.toLowerCase().includes('copycat')) return 'App/Website Clone';
+    if (category.toLowerCase().includes('ui') || category.toLowerCase().includes('similarity')) return 'UI Similarity';
+    if (category.toLowerCase().includes('suspicious') || category.toLowerCase().includes('keyword')) return 'Suspicious Language';
+  }
+  
+  return 'Safe Content';
+};
+
 // Enhanced simulation function that uses the AI analyzer
 export const simulateEnhancedAnalysis = async (url: string): Promise<any> => {
   try {
     const aiResult = await aiAnalyzer.analyzeURL(url);
+    
+    // Map threat categories to our classification system
+    const threatCategory = mapThreatCategory(aiResult.threatCategories);
+    const primaryDetectionReason = aiResult.suspiciousPatterns.length > 0 
+      ? aiResult.suspiciousPatterns[0].pattern 
+      : 'Automated analysis completed';
+    
+    const supportingEvidence = {
+      suspiciousPatterns: aiResult.suspiciousPatterns,
+      riskFactors: aiResult.suspiciousPatterns.map(p => p.pattern),
+      confidence: aiResult.confidence
+    };
     
     return {
       id: Math.random().toString(36).substring(2),
       url,
       riskScore: aiResult.riskScore,
       riskLevel: aiResult.riskLevel,
+      threatCategory,
+      threatSubcategory: aiResult.threatCategories.length > 1 ? aiResult.threatCategories[1] : null,
+      primaryDetectionReason,
+      classificationConfidence: aiResult.confidence / 100,
       status: 'completed',
       analysisResults: {
         domainAge: Math.floor(Math.random() * 3650) + 30,
@@ -478,6 +512,7 @@ export const simulateEnhancedAnalysis = async (url: string): Promise<any> => {
         phishingKeywords: Math.floor(aiResult.riskScore / 10),
         riskFactors: aiResult.suspiciousPatterns.map(p => p.pattern),
         scanTimestamp: new Date().toISOString(),
+        supportingEvidence,
         technicalDetails: {
           serverLocation: ['US', 'EU', 'Asia', 'Unknown'][Math.floor(Math.random() * 4)],
           responseTime: Math.floor(Math.random() * 2000) + 100,
@@ -494,15 +529,35 @@ export const simulateEnhancedAnalysis = async (url: string): Promise<any> => {
   } catch (error) {
     console.error('AI analysis failed, using fallback:', error);
     
-    // Fallback to original simulation
+    // Fallback with proper threat categorization
     const riskScore = Math.floor(Math.random() * 100);
     const riskLevel = riskScore >= 80 ? 'critical' : riskScore >= 60 ? 'high' : riskScore >= 30 ? 'medium' : 'low';
+    const threatCategories = ['Safe Content', 'Suspicious Language', 'UI Similarity', 'Fake Website', 'Phishing Domain'];
+    const threatCategory = riskScore >= 80 ? threatCategories[4] : 
+                          riskScore >= 60 ? threatCategories[3] : 
+                          riskScore >= 30 ? threatCategories[2] : threatCategories[0];
+    
+    const riskFactors = [
+      'Suspicious domain age',
+      'Unusual SSL certificate', 
+      'Multiple redirects detected',
+      'Missing security headers'
+    ].slice(0, Math.floor(Math.random() * 4) + 1);
+    
+    const supportingEvidence = {
+      riskFactors,
+      confidence: Math.floor(Math.random() * 40) + 60
+    };
     
     return {
       id: Math.random().toString(36).substring(2),
       url,
       riskScore,
       riskLevel,
+      threatCategory,
+      threatSubcategory: null,
+      primaryDetectionReason: riskFactors[0] || 'Automated analysis completed',
+      classificationConfidence: (Math.floor(Math.random() * 40) + 60) / 100,
       status: 'completed',
       analysisResults: {
         domainAge: Math.floor(Math.random() * 3650) + 30,
@@ -510,13 +565,9 @@ export const simulateEnhancedAnalysis = async (url: string): Promise<any> => {
         redirectCount: Math.floor(Math.random() * 5),
         maliciousContent: Math.random() > 0.7,
         phishingKeywords: Math.floor(Math.random() * 10),
-        riskFactors: [
-          'Suspicious domain age',
-          'Unusual SSL certificate',
-          'Multiple redirects detected',
-          'Missing security headers'
-        ].slice(0, Math.floor(Math.random() * 4) + 1),
+        riskFactors,
         scanTimestamp: new Date().toISOString(),
+        supportingEvidence,
         technicalDetails: {
           serverLocation: ['US', 'EU', 'Asia', 'Unknown'][Math.floor(Math.random() * 4)],
           responseTime: Math.floor(Math.random() * 2000) + 100,
