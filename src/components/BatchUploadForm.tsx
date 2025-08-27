@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Upload, FileText, CheckCircle, AlertTriangle, X, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 const batchSchema = z.object({
@@ -68,6 +69,7 @@ export function BatchUploadForm() {
   const [batchId, setBatchId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<BatchForm>({
     resolver: zodResolver(batchSchema),
@@ -161,6 +163,10 @@ export function BatchUploadForm() {
     event.preventDefault();
   };
 
+  const generateSessionId = () => {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  };
+
   const processBatch = async () => {
     if (!csvData || csvData.data.length === 0) return;
 
@@ -168,10 +174,15 @@ export function BatchUploadForm() {
       setIsProcessing(true);
       setProcessingProgress(0);
 
+      // Generate session ID for anonymous users
+      const sessionId = user ? null : generateSessionId();
+
       // Create batch submission record
       const { data: batch, error: batchError } = await supabase
         .from("batch_submissions")
         .insert({
+          user_id: user?.id || null,
+          session_id: sessionId,
           file_name: form.getValues("file").name,
           total_urls: csvData.data.length,
           status: "processing",
@@ -199,6 +210,8 @@ export function BatchUploadForm() {
           const { data: submission, error: submissionError } = await supabase
             .from("url_submissions")
             .insert({
+              user_id: user?.id || null,
+              session_id: sessionId,
               url: item.url,
               submission_type: "url",
               risk_score: analysisResult.riskScore,

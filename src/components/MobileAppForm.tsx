@@ -13,6 +13,7 @@ import { Smartphone, Shield, AlertTriangle, CheckCircle, ExternalLink } from "lu
 import { mobileAppAnalyzer } from "@/lib/mobileAppAnalysis";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import type { AppAnalysisResult, AppMetadata } from "@/lib/mobileAppAnalysis";
 
 const appSchema = z.object({
@@ -34,6 +35,7 @@ export function MobileAppForm({ onAnalysisComplete }: MobileAppFormProps) {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [result, setResult] = useState<AppAnalysisResult | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<AppForm>({
     resolver: zodResolver(appSchema),
@@ -138,6 +140,10 @@ export function MobileAppForm({ onAnalysisComplete }: MobileAppFormProps) {
     };
   };
 
+  const generateSessionId = () => {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  };
+
   const handleAppSubmit = async (data: AppForm) => {
     try {
       setIsAnalyzing(true);
@@ -176,10 +182,15 @@ export function MobileAppForm({ onAnalysisComplete }: MobileAppFormProps) {
       // Run analysis using existing mobile app analyzer
       const analysisResult = await mobileAppAnalyzer.analyzeApp(appMetadata);
 
+      // Generate session ID for anonymous users
+      const sessionId = user ? null : generateSessionId();
+
       // Store in database
       const { data: submission, error: submissionError } = await supabase
         .from("url_submissions")
         .insert({
+          user_id: user?.id || null,
+          session_id: sessionId,
           url: data.appStoreUrl,
           submission_type: "app",
           app_store_link: data.appStoreUrl,
