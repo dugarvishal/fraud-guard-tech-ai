@@ -12,6 +12,17 @@ export interface ComprehensiveAnalysisResult {
   url: string;
   overallRiskScore: number;
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  threatCategory: string;
+  threatSubcategory?: string;
+  primaryDetectionReason: string;
+  supportingEvidence: {
+    domainAnalysis?: any;
+    contentAnalysis?: any;
+    visualAnalysis?: any;
+    mobileAppAnalysis?: any;
+    testCaseMatches?: string[];
+  };
+  classificationConfidence: number;
   primaryThreats: string[];
   detailedAnalysis: {
     ai: any;
@@ -20,9 +31,13 @@ export interface ComprehensiveAnalysisResult {
     mobile?: any;
   };
   actionRecommendations: string[];
-  confidenceScore: number;
   analysisTimestamp: Date;
-  testCaseMatches: string[];
+  explainability: {
+    whyFlagged: string;
+    riskFactors: { factor: string; severity: 'low' | 'medium' | 'high' | 'critical'; explanation: string }[];
+    similarThreats: string[];
+    userGuidance: string;
+  };
 }
 
 export class EnhancedAnalysisEngine {
@@ -165,6 +180,14 @@ export class EnhancedAnalysisEngine {
       url,
       overallRiskScore: 100,
       riskLevel: 'critical',
+      threatCategory: 'Malware-laden',
+      threatSubcategory: 'Known Malicious Domain',
+      primaryDetectionReason: `Domain ${hostname} is on our blocklist of known malicious sites`,
+      supportingEvidence: {
+        testCaseMatches: [`Blocked domain: ${hostname}`],
+        domainAnalysis: { status: 'blocked', reason: 'Known threat' }
+      },
+      classificationConfidence: 0.95,
       primaryThreats: ['Known Malicious Domain', 'Automatic Block Triggered'],
       detailedAnalysis: {
         ai: null,
@@ -177,9 +200,19 @@ export class EnhancedAnalysisEngine {
         'Run antivirus scan',
         'Report this site'
       ],
-      confidenceScore: 0.95,
       analysisTimestamp: new Date(),
-      testCaseMatches: [`Blocked domain: ${hostname}`]
+      explainability: {
+        whyFlagged: `This domain (${hostname}) has been identified as malicious and is automatically blocked by our security system.`,
+        riskFactors: [
+          { 
+            factor: 'Blocklist Match', 
+            severity: 'critical', 
+            explanation: 'Domain appears on verified threat intelligence feeds' 
+          }
+        ],
+        similarThreats: ['malware distribution', 'phishing campaigns', 'data theft'],
+        userGuidance: 'Avoid this site completely. If you accidentally visited it, run a security scan and check for unusual activity.'
+      }
     };
   }
 
@@ -257,6 +290,7 @@ export class EnhancedAnalysisEngine {
     let totalWeight = 0;
     const threats: string[] = [];
     const recommendations: string[] = [];
+    const riskFactors: { factor: string; severity: 'low' | 'medium' | 'high' | 'critical'; explanation: string }[] = [];
 
     // AI Analysis (30% weight)
     if (ai) {
@@ -264,6 +298,13 @@ export class EnhancedAnalysisEngine {
       totalWeight += 0.3;
       if (ai.threatCategories) threats.push(...ai.threatCategories);
       if (ai.recommendations) recommendations.push(...ai.recommendations);
+      if (ai.riskFactors) {
+        riskFactors.push(...ai.riskFactors.map((factor: string) => ({
+          factor,
+          severity: ai.riskScore > 70 ? 'high' : ai.riskScore > 40 ? 'medium' : 'low',
+          explanation: `AI analysis detected: ${factor}`
+        })));
+      }
     }
 
     // NLP Analysis (25% weight)
@@ -277,6 +318,13 @@ export class EnhancedAnalysisEngine {
       totalRiskScore += nlpRisk * 0.25;
       totalWeight += 0.25;
       if (nlp.flags) threats.push(...nlp.flags);
+      if (nlp.urgencyScore > 50) {
+        riskFactors.push({
+          factor: 'Urgency Language',
+          severity: nlp.urgencyScore > 80 ? 'high' : 'medium',
+          explanation: 'Content uses urgent language to pressure users into quick decisions'
+        });
+      }
     }
 
     // Visual Analysis (25% weight)
@@ -289,9 +337,16 @@ export class EnhancedAnalysisEngine {
       totalRiskScore += visualRisk * 0.25;
       totalWeight += 0.25;
       if (visual.brandSimilarities) {
-        threats.push(...visual.brandSimilarities
-          .filter((b: any) => b.similarity > 50)
-          .map((b: any) => `Brand impersonation: ${b.brand}`));
+        const suspiciousBrands = visual.brandSimilarities.filter((b: any) => b.similarity > 50);
+        threats.push(...suspiciousBrands.map((b: any) => `Brand impersonation: ${b.brand}`));
+        
+        suspiciousBrands.forEach((brand: any) => {
+          riskFactors.push({
+            factor: 'UI Similarity',
+            severity: brand.similarity > 80 ? 'critical' : brand.similarity > 60 ? 'high' : 'medium',
+            explanation: `Visual elements closely resemble ${brand.brand} (${brand.similarity}% similarity)`
+          });
+        });
       }
     }
 
@@ -301,29 +356,187 @@ export class EnhancedAnalysisEngine {
       totalWeight += 0.2;
       if (mobile.threatCategories) threats.push(...mobile.threatCategories);
       if (mobile.recommendations) recommendations.push(...mobile.recommendations);
+      if (mobile.suspiciousPermissions?.length > 0) {
+        riskFactors.push({
+          factor: 'Excessive Permissions',
+          severity: mobile.riskScore > 70 ? 'high' : 'medium',
+          explanation: `App requests ${mobile.suspiciousPermissions.length} suspicious permissions`
+        });
+      }
     }
 
     // Normalize risk score
     const overallRiskScore = totalWeight > 0 ? Math.round(totalRiskScore / totalWeight) : 0;
 
-    // Determine risk level
+    // Determine risk level and threat category
     let riskLevel: 'low' | 'medium' | 'high' | 'critical';
-    if (overallRiskScore >= 85) riskLevel = 'critical';
-    else if (overallRiskScore >= 70) riskLevel = 'high';
-    else if (overallRiskScore >= 45) riskLevel = 'medium';
-    else riskLevel = 'low';
+    let threatCategory: string;
+    let primaryDetectionReason: string;
+
+    if (overallRiskScore >= 85) {
+      riskLevel = 'critical';
+      threatCategory = this.determineThreatCategory(analyses, threats, 'critical');
+    } else if (overallRiskScore >= 70) {
+      riskLevel = 'high';
+      threatCategory = this.determineThreatCategory(analyses, threats, 'high');
+    } else if (overallRiskScore >= 45) {
+      riskLevel = 'medium';
+      threatCategory = this.determineThreatCategory(analyses, threats, 'medium');
+    } else {
+      riskLevel = 'low';
+      threatCategory = 'Safe Content';
+    }
+
+    primaryDetectionReason = this.generatePrimaryDetectionReason(analyses, threatCategory, overallRiskScore);
 
     return {
       url,
       overallRiskScore,
       riskLevel,
-      primaryThreats: [...new Set(threats)].slice(0, 10), // Top 10 threats
+      threatCategory,
+      primaryDetectionReason,
+      supportingEvidence: {
+        domainAnalysis: ai?.domainAnalysis,
+        contentAnalysis: nlp,
+        visualAnalysis: visual,
+        mobileAppAnalysis: mobile
+      },
+      classificationConfidence: this.calculateConfidenceScore(analyses),
+      primaryThreats: [...new Set(threats)].slice(0, 10),
       detailedAnalysis: { ai, nlp, visual, mobile },
-      actionRecommendations: [...new Set(recommendations)].slice(0, 8), // Top 8 recommendations
-      confidenceScore: this.calculateConfidenceScore(analyses),
+      actionRecommendations: [...new Set(recommendations)].slice(0, 8),
       analysisTimestamp: new Date(),
-      testCaseMatches: []
+      explainability: {
+        whyFlagged: this.generateExplanation(threatCategory, overallRiskScore, riskFactors),
+        riskFactors: riskFactors.slice(0, 5), // Top 5 risk factors
+        similarThreats: this.getSimilarThreats(threatCategory),
+        userGuidance: this.generateUserGuidance(threatCategory, riskLevel)
+      }
     };
+  }
+
+  private determineThreatCategory(analyses: any, threats: string[], riskLevel: string): string {
+    const { ai, nlp, visual, mobile } = analyses;
+
+    // Check for mobile app specific threats
+    if (mobile && mobile.riskScore > 60) {
+      if (mobile.isClone) return 'App/Website Clone';
+      if (mobile.isFleeceware) return 'Scam Mobile App';
+      return 'Scam Mobile App';
+    }
+
+    // Check for visual impersonation
+    if (visual?.brandSimilarities?.some((b: any) => b.similarity > 70)) {
+      return 'App/Website Clone';
+    }
+
+    // Check for phishing indicators
+    if (nlp?.impersonationScore > 60 || threats.some(t => t.toLowerCase().includes('phishing'))) {
+      return 'Phishing Domain';
+    }
+
+    // Check for malware indicators
+    if (ai?.malwareIndicators > 0 || threats.some(t => t.toLowerCase().includes('malware'))) {
+      return 'Malware-laden';
+    }
+
+    // Check for visual similarity without obvious cloning
+    if (visual?.layoutSuspicionScore > 50) {
+      return 'UI Similarity';
+    }
+
+    // Check for social engineering language
+    if (nlp?.urgencyScore > 50 || nlp?.financialRiskScore > 50) {
+      return 'Suspicious Language';
+    }
+
+    // Check for general fake website indicators
+    if (ai?.domainAge < 30 && riskLevel !== 'low') {
+      return 'Fake Website';
+    }
+
+    return 'Safe Content';
+  }
+
+  private generatePrimaryDetectionReason(analyses: any, category: string, riskScore: number): string {
+    const { ai, nlp, visual, mobile } = analyses;
+
+    switch (category) {
+      case 'Phishing Domain':
+        return nlp?.impersonationScore > 60 
+          ? 'Content impersonates trusted entities to steal credentials'
+          : 'Multiple phishing indicators detected in domain and content';
+      
+      case 'Malware-laden':
+        return 'Site exhibits patterns consistent with malware distribution';
+      
+      case 'App/Website Clone':
+        if (visual?.brandSimilarities?.length > 0) {
+          const topBrand = visual.brandSimilarities[0];
+          return `Visual design closely mimics ${topBrand.brand} (${topBrand.similarity}% similarity)`;
+        }
+        return 'Site impersonates legitimate brand or service';
+      
+      case 'Scam Mobile App':
+        return mobile?.isFleeceware 
+          ? 'App uses deceptive subscription practices (fleeceware)'
+          : 'Mobile app exhibits fraudulent behavior patterns';
+      
+      case 'UI Similarity':
+        return 'Interface design mimics trusted brands to deceive users';
+      
+      case 'Suspicious Language':
+        return 'Content uses psychological manipulation and urgency tactics';
+      
+      case 'Fake Website':
+        return `Recently created domain (${ai?.domainAge || 'unknown'} days) with suspicious characteristics`;
+      
+      default:
+        return riskScore < 30 ? 'No significant threats detected' : 'Multiple low-level risk indicators found';
+    }
+  }
+
+  private generateExplanation(category: string, riskScore: number, riskFactors: any[]): string {
+    const factorCount = riskFactors.length;
+    const highRiskFactors = riskFactors.filter(f => f.severity === 'high' || f.severity === 'critical').length;
+
+    let explanation = `This content was classified as "${category}" based on ${factorCount} risk indicators. `;
+    
+    if (highRiskFactors > 0) {
+      explanation += `${highRiskFactors} high-severity factors were detected, `;
+    }
+    
+    explanation += `resulting in a risk score of ${riskScore}/100.`;
+
+    return explanation;
+  }
+
+  private getSimilarThreats(category: string): string[] {
+    const threatMap: { [key: string]: string[] } = {
+      'Phishing Domain': ['credential theft', 'account takeover', 'identity fraud'],
+      'Malware-laden': ['virus infection', 'data corruption', 'system compromise'],
+      'App/Website Clone': ['brand impersonation', 'trademark violation', 'user deception'],
+      'Scam Mobile App': ['subscription fraud', 'data harvesting', 'financial theft'],
+      'UI Similarity': ['visual spoofing', 'interface mimicry', 'user confusion'],
+      'Suspicious Language': ['social engineering', 'pressure tactics', 'psychological manipulation'],
+      'Fake Website': ['domain spoofing', 'business impersonation', 'fraudulent services']
+    };
+
+    return threatMap[category] || ['general security threats'];
+  }
+
+  private generateUserGuidance(category: string, riskLevel: string): string {
+    const guidanceMap: { [key: string]: string } = {
+      'Phishing Domain': 'Never enter passwords or personal information. Verify the official website through a search engine.',
+      'Malware-laden': 'Leave immediately and run antivirus scan. Avoid downloading any files.',
+      'App/Website Clone': 'Use official app stores and verify developer authenticity before downloading.',
+      'Scam Mobile App': 'Check app permissions and reviews. Be wary of subscription requests.',
+      'UI Similarity': 'Verify the website URL carefully and look for official security indicators.',
+      'Suspicious Language': 'Be skeptical of urgent claims and time-limited offers. Research before acting.',
+      'Fake Website': 'Verify business legitimacy through official channels before engaging.'
+    };
+
+    return guidanceMap[category] || 'Exercise caution and verify legitimacy before proceeding.';
   }
 
   private applyTestCaseEnhancements(
@@ -338,36 +551,43 @@ export class EnhancedAnalysisEngine {
     // Check against test case patterns
     for (const [patternName, pattern] of this.testCasePatterns) {
       let isMatch = false;
+      let matchDetails = '';
 
       // Domain-based matching
       if (pattern.domains && pattern.domains.some((domain: string) => hostname.includes(domain))) {
         isMatch = true;
-        matches.push(`${pattern.category}: Domain match (${hostname})`);
+        matchDetails = `Domain match (${hostname})`;
+        matches.push(`${pattern.category}: ${matchDetails}`);
       }
 
       // Content-based matching
       if (pattern.indicators && pattern.indicators.some((indicator: string) => 
         contentLower.includes(indicator.toLowerCase()))) {
         isMatch = true;
-        matches.push(`${pattern.category}: Content match`);
+        matchDetails = 'Content indicators detected';
+        matches.push(`${pattern.category}: ${matchDetails}`);
       }
 
       // Pattern-based matching
       if (pattern.patterns && pattern.patterns.some((patternText: string) => 
         contentLower.includes(patternText.toLowerCase()))) {
         isMatch = true;
-        matches.push(`${pattern.category}: Pattern match`);
+        matchDetails = 'Suspicious language patterns';
+        matches.push(`${pattern.category}: ${matchDetails}`);
       }
 
       // App pattern matching
       if (pattern.appPatterns && pattern.appPatterns.some((appPattern: string) => 
         contentLower.includes(appPattern.toLowerCase()))) {
         isMatch = true;
-        matches.push(`${pattern.category}: App pattern match`);
+        matchDetails = 'App signature match';
+        matches.push(`${pattern.category}: ${matchDetails}`);
       }
 
-      // Apply risk multiplier if match found
+      // Apply enhancements if match found
       if (isMatch && pattern.riskMultiplier) {
+        // Update risk score
+        const oldScore = result.overallRiskScore;
         result.overallRiskScore = Math.min(100, Math.round(result.overallRiskScore * pattern.riskMultiplier));
         
         // Update risk level based on new score
@@ -375,11 +595,33 @@ export class EnhancedAnalysisEngine {
         else if (result.overallRiskScore >= 70) result.riskLevel = 'high';
         else if (result.overallRiskScore >= 45) result.riskLevel = 'medium';
         
+        // Update threat category if this is a higher severity match
+        if (pattern.category.includes('Malware') || pattern.category.includes('Phishing')) {
+          result.threatCategory = pattern.category.includes('Malware') ? 'Malware-laden' : 'Phishing Domain';
+        } else if (pattern.category.includes('Clone')) {
+          result.threatCategory = 'App/Website Clone';
+        } else if (pattern.category.includes('Scam')) {
+          result.threatCategory = 'Scam Mobile App';
+        }
+
+        // Enhance primary detection reason
+        result.primaryDetectionReason = `${pattern.category} detected: ${matchDetails}. Risk elevated from ${oldScore} to ${result.overallRiskScore}.`;
+        
+        // Add to threats list
         result.primaryThreats.unshift(pattern.category);
+
+        // Update explainability
+        result.explainability.riskFactors.unshift({
+          factor: 'Test Case Match',
+          severity: result.riskLevel,
+          explanation: `Matches known ${pattern.category.toLowerCase()} pattern: ${matchDetails}`
+        });
       }
     }
 
-    result.testCaseMatches = matches;
+    // Update supporting evidence
+    result.supportingEvidence.testCaseMatches = matches;
+    
     return result;
   }
 
@@ -407,7 +649,7 @@ export class EnhancedAnalysisEngine {
       analysisCount++;
     }
 
-    return analysisCount > 0 ? totalConfidence / analysisCount : 0.5;
+    return analysisCount > 0 ? Math.round((totalConfidence / analysisCount) * 100) / 100 : 0.5;
   }
 }
 

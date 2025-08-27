@@ -16,6 +16,10 @@ interface AnalysisResult {
   url: string;
   riskScore: number;
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  threatCategory: string;
+  threatSubcategory?: string;
+  primaryDetectionReason: string;
+  classificationConfidence: number;
   status: 'completed' | 'processing' | 'failed';
   analysisResults: {
     domainAge: number;
@@ -25,6 +29,18 @@ interface AnalysisResult {
     phishingKeywords: number;
     riskFactors: string[];
     scanTimestamp: string;
+    supportingEvidence?: {
+      domainAnalysis?: any;
+      contentAnalysis?: any;
+      visualAnalysis?: any;
+      mobileAppAnalysis?: any;
+    };
+    explainability?: {
+      whyFlagged: string;
+      riskFactors: { factor: string; severity: 'low' | 'medium' | 'high' | 'critical'; explanation: string }[];
+      similarThreats: string[];
+      userGuidance: string;
+    };
     technicalDetails?: {
       serverLocation: string;
       responseTime: number;
@@ -64,13 +80,31 @@ const AnalysisResultCard: React.FC<AnalysisResultCardProps> = ({
     }
   };
 
-  const getRiskIcon = (level: string) => {
-    switch (level) {
-      case 'low': return CheckCircle;
-      case 'medium': return Clock;
-      case 'high': return AlertTriangle;
-      case 'critical': return AlertCircle;
+  const getThreatCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'Safe Content': return CheckCircle;
+      case 'Suspicious Language': return Clock;
+      case 'UI Similarity': return Eye;
+      case 'Fake Website': return Globe;
+      case 'Scam Mobile App': return AlertTriangle;
+      case 'App/Website Clone': return AlertTriangle;
+      case 'Phishing Domain': return AlertCircle;
+      case 'Malware-laden': return AlertCircle;
       default: return Clock;
+    }
+  };
+
+  const getThreatCategoryColor = (category: string) => {
+    switch (category) {
+      case 'Safe Content': return 'hsl(var(--primary))';
+      case 'Suspicious Language': return 'hsl(var(--security-secondary))';
+      case 'UI Similarity': return 'hsl(var(--security-secondary))';
+      case 'Fake Website': return 'hsl(var(--destructive))';
+      case 'Scam Mobile App': return 'hsl(var(--destructive))';
+      case 'App/Website Clone': return 'hsl(var(--destructive))';
+      case 'Phishing Domain': return 'hsl(var(--destructive))';
+      case 'Malware-laden': return 'hsl(var(--destructive))';
+      default: return 'hsl(var(--muted-foreground))';
     }
   };
 
@@ -98,7 +132,8 @@ const AnalysisResultCard: React.FC<AnalysisResultCardProps> = ({
     return 'hsl(var(--destructive))';
   };
 
-  const RiskIcon = getRiskIcon(result.riskLevel);
+  const ThreatIcon = getThreatCategoryIcon(result.threatCategory);
+  const categoryColor = getThreatCategoryColor(result.threatCategory);
 
   return (
     <Card className="transition-all duration-300 hover:shadow-feature">
@@ -107,11 +142,11 @@ const AnalysisResultCard: React.FC<AnalysisResultCardProps> = ({
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div 
               className="p-2 rounded-full bg-opacity-10"
-              style={{ backgroundColor: getRiskColor(result.riskLevel) + '20' }}
+              style={{ backgroundColor: categoryColor + '20' }}
             >
-              <RiskIcon 
+              <ThreatIcon 
                 className="h-5 w-5" 
-                style={{ color: getRiskColor(result.riskLevel) }}
+                style={{ color: categoryColor }}
               />
             </div>
             <div className="min-w-0 flex-1">
@@ -124,15 +159,20 @@ const AnalysisResultCard: React.FC<AnalysisResultCardProps> = ({
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Badge 
-              variant={getRiskBadgeVariant(result.riskLevel)}
+              variant={result.threatCategory === 'Safe Content' ? 'default' : 'destructive'}
               className={
-                result.riskLevel === 'low' 
+                result.threatCategory === 'Safe Content' 
                   ? 'bg-primary/10 text-primary border-primary/20' 
                   : ''
               }
             >
-              {result.riskLevel.toUpperCase()} RISK
+              {result.threatCategory.toUpperCase()}
             </Badge>
+            {result.threatSubcategory && (
+              <Badge variant="outline" className="text-xs">
+                {result.threatSubcategory}
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -145,15 +185,13 @@ const AnalysisResultCard: React.FC<AnalysisResultCardProps> = ({
             <div className="flex items-center gap-2">
               <span 
                 className="text-lg font-bold"
-                style={{ color: getRiskColor(result.riskLevel) }}
+                style={{ color: categoryColor }}
               >
                 {result.riskScore}/100
               </span>
-              {result.analysisResults.mlAnalysis && (
-                <Badge variant="outline" className="text-xs">
-                  AI: {result.analysisResults.mlAnalysis.confidenceScore}%
-                </Badge>
-              )}
+              <Badge variant="outline" className="text-xs">
+                Confidence: {Math.round(result.classificationConfidence * 100)}%
+              </Badge>
             </div>
           </div>
           <div className="relative">
@@ -214,6 +252,14 @@ const AnalysisResultCard: React.FC<AnalysisResultCardProps> = ({
               {result.analysisResults.phishingKeywords} keywords
             </p>
           </div>
+        </div>
+
+        {/* Primary Detection Reason */}
+        <div className="space-y-2">
+          <span className="text-sm font-medium text-muted-foreground">Why was this flagged?</span>
+          <p className="text-sm bg-muted/50 p-3 rounded-lg">
+            {result.primaryDetectionReason}
+          </p>
         </div>
 
         {/* Risk Factors */}
@@ -361,6 +407,61 @@ const AnalysisResultCard: React.FC<AnalysisResultCardProps> = ({
                             </div>
                           ))}
                         </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+
+                {/* Explainability Details */}
+                {result.analysisResults.explainability && (
+                  <AccordionItem value="explainability">
+                    <AccordionTrigger className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        Why This Classification?
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-4">
+                      <div>
+                        <h5 className="font-medium text-sm mb-2">Explanation</h5>
+                        <p className="text-sm text-muted-foreground">
+                          {result.analysisResults.explainability.whyFlagged}
+                        </p>
+                      </div>
+
+                      <div>
+                        <h5 className="font-medium text-sm mb-2">Risk Factors</h5>
+                        <div className="space-y-2">
+                          {result.analysisResults.explainability.riskFactors.map((factor, index) => (
+                            <div key={index} className="flex items-start gap-2 text-sm">
+                              <AlertTriangle 
+                                className={`h-3 w-3 flex-shrink-0 mt-0.5 ${getSeverityColor(factor.severity)}`} 
+                              />
+                              <div>
+                                <span className="font-medium">{factor.factor}</span>
+                                <p className="text-muted-foreground text-xs">{factor.explanation}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h5 className="font-medium text-sm mb-2">Similar Threats</h5>
+                        <div className="flex flex-wrap gap-1">
+                          {result.analysisResults.explainability.similarThreats.map((threat, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {threat}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h5 className="font-medium text-sm mb-2">User Guidance</h5>
+                        <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                          {result.analysisResults.explainability.userGuidance}
+                        </p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>

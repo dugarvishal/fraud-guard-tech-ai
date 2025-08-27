@@ -44,6 +44,10 @@ interface AnalysisResult {
   url: string;
   riskScore: number;
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  threatCategory: string;
+  threatSubcategory?: string;
+  primaryDetectionReason: string;
+  classificationConfidence: number;
   status: 'completed' | 'processing' | 'failed';
   analysisResults: any;
 }
@@ -77,7 +81,33 @@ const Submit = () => {
     // Use enhanced AI analysis with progress updates
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
     
-    return await simulateEnhancedAnalysis(url);
+    const aiResult = await simulateEnhancedAnalysis(url);
+    
+    // Convert to the expected format for Submit page
+    return {
+      id: Math.random().toString(36).substring(2),
+      url: url,
+      riskScore: aiResult.riskScore || 50,
+      riskLevel: aiResult.riskLevel || 'medium',
+      threatCategory: aiResult.threatCategory || 'Safe Content',
+      threatSubcategory: aiResult.threatSubcategory,
+      primaryDetectionReason: aiResult.primaryDetectionReason || 'Automated analysis completed',
+      classificationConfidence: aiResult.confidence || 0.85,
+      status: 'completed' as const,
+      analysisResults: {
+        domainAge: aiResult.domainAge || 365,
+        sslStatus: aiResult.sslStatus || 'valid',
+        redirectCount: aiResult.redirectCount || 0,
+        maliciousContent: aiResult.maliciousContent || false,
+        phishingKeywords: aiResult.phishingKeywords || 0,
+        riskFactors: aiResult.riskFactors || [],
+        scanTimestamp: new Date().toISOString(),
+        explainability: aiResult.explainability,
+        supportingEvidence: aiResult.supportingEvidence,
+        technicalDetails: aiResult.technicalDetails,
+        mlAnalysis: aiResult.mlAnalysis
+      }
+    };
   };
 
   const handleUrlSubmit = async (data: UrlForm) => {
@@ -120,7 +150,12 @@ const Submit = () => {
           analysis_status: 'completed',
           risk_score: result.riskScore,
           risk_level: result.riskLevel,
+          threat_category: result.threatCategory,
+          threat_subcategory: result.threatSubcategory,
+          primary_detection_reason: result.primaryDetectionReason,
+          classification_confidence: result.classificationConfidence,
           analysis_results: result.analysisResults,
+          supporting_evidence: result.analysisResults.supportingEvidence || {},
         })
         .eq('id', submission.id);
 
@@ -334,7 +369,7 @@ const Submit = () => {
                     showDetailed={true}
                     onShare={(result) => {
                       navigator.clipboard.writeText(
-                        `Security Analysis Result for ${result.url}\nRisk Score: ${result.riskScore}/100\nRisk Level: ${result.riskLevel.toUpperCase()}`
+                        `Security Analysis Result for ${result.url}\nThreat Category: ${result.threatCategory}\nRisk Score: ${result.riskScore}/100\nDetection Reason: ${result.primaryDetectionReason}`
                       );
                       toast({
                         title: "Analysis Shared",
