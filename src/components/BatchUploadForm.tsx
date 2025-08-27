@@ -32,6 +32,7 @@ interface BatchResult {
   riskScore?: number;
   riskLevel?: string;
   threatCategory?: string;
+  confidence?: number;
   error?: string;
 }
 
@@ -52,7 +53,7 @@ const simulateUrlAnalysis = async () => {
     riskLevel,
     threatCategory,
     primaryReason: `Detected ${threatCategory.toLowerCase()} indicators`,
-    confidence: Math.floor(Math.random() * 20) + 80,
+    confidence: (Math.floor(Math.random() * 20) + 80) / 100,
   };
 };
 
@@ -268,6 +269,7 @@ export function BatchUploadForm() {
             riskScore: analysisResult.riskScore,
             riskLevel: analysisResult.riskLevel,
             threatCategory: analysisResult.threatCategory,
+            confidence: analysisResult.confidence,
           };
 
         } catch (error) {
@@ -563,6 +565,7 @@ export function BatchUploadForm() {
                     <TableHead>Risk Score</TableHead>
                     <TableHead>Risk Level</TableHead>
                     <TableHead>Threat Category</TableHead>
+                    <TableHead>Confidence</TableHead>
                     <TableHead>Error</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -589,6 +592,9 @@ export function BatchUploadForm() {
                         )}
                       </TableCell>
                       <TableCell>{result.threatCategory || "-"}</TableCell>
+                      <TableCell>
+                        {result.confidence ? `${Math.round(result.confidence * 100)}%` : "-"}
+                      </TableCell>
                       <TableCell className="text-red-600 text-sm">
                         {result.error || "-"}
                       </TableCell>
