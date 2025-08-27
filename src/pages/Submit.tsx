@@ -138,7 +138,7 @@ const Submit = () => {
       }, 200);
 
       // Perform analysis
-      const result = await simulateAnalysis(data.url);
+      const result = await simulateEnhancedAnalysis(data.url);
       
       clearInterval(progressInterval);
       setAnalysisProgress(100);
@@ -164,7 +164,7 @@ const Submit = () => {
 
       toast({
         title: "Analysis Complete",
-        description: `Risk level: ${result.riskLevel.toUpperCase()} (${result.riskScore}/100)`,
+        description: `Threat: ${result.threatCategory} (${result.riskScore}/100)`,
       });
 
       // Show benefits banner for anonymous users after analysis

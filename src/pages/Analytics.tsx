@@ -429,40 +429,6 @@ const Analytics = () => {
             <TabsContent value="overview" className="space-y-6">
               {/* Charts Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Risk Breakdown Pie Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <PieChartIcon className="h-5 w-5" />
-                      Risk Level Distribution
-                    </CardTitle>
-                    <CardDescription>
-                      Breakdown of risk levels across all submissions
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={data?.riskBreakdown || []}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => 
-                            `${name} ${(percent * 100).toFixed(0)}%`
-                          }
-                        >
-                          {data?.riskBreakdown.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
 
                 {/* Trends Line Chart */}
                 <Card>
