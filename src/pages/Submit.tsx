@@ -19,6 +19,8 @@ import LoginBenefitsBanner from '@/components/LoginBenefitsBanner';
 import Header from '@/components/Header';
 import AnalysisResultCard from '@/components/AnalysisResultCard';
 import { simulateEnhancedAnalysis } from '@/lib/aiAnalysis';
+import { MobileAppForm } from '@/components/MobileAppForm';
+import { BatchUploadForm } from '@/components/BatchUploadForm';
 
 const urlSchema = z.object({
   url: z.string().url('Please enter a valid URL (e.g., https://example.com)'),
@@ -332,21 +334,11 @@ const Submit = () => {
                 </TabsContent>
 
                 <TabsContent value="app" className="space-y-4">
-                  <Alert>
-                    <Smartphone className="h-4 w-4" />
-                    <AlertDescription>
-                      App analysis feature coming soon! We'll support iOS App Store and Google Play Store links.
-                    </AlertDescription>
-                  </Alert>
+                  <MobileAppForm />
                 </TabsContent>
 
                 <TabsContent value="batch" className="space-y-4">
-                  <Alert>
-                    <Upload className="h-4 w-4" />
-                    <AlertDescription>
-                      Batch upload feature coming soon! Upload CSV files with multiple URLs for bulk analysis.
-                    </AlertDescription>
-                  </Alert>
+                  <BatchUploadForm />
                 </TabsContent>
               </Tabs>
             </CardContent>
