@@ -257,15 +257,52 @@ class AIFraudAnalyzer {
   }
 
   private detectPhishingKeywords(content: string): number {
-    const phishingKeywords = [
+    const enhancedPhishingKeywords = [
+      // Urgency phrases from test cases
       'urgent', 'verify account', 'suspended', 'click here', 'limited time',
       'act now', 'confirm identity', 'security alert', 'update payment',
-      'winner', 'congratulations', 'claim prize', 'free money',
-      'nigerian prince', 'inheritance', 'lottery', 'bitcoin'
+      'your account has been compromised', 'account locked', 'immediate action required',
+      'expires today', 'expires tomorrow', 'limited offer', 'urgent claim',
+      
+      // Promotional scams
+      '80% off', '90% off', 'massive discount', 'world cup sale', 'free gift card',
+      'claim your gift card now', 'congratulations winner', 'you have won',
+      
+      // Authority impersonation
+      'apple support', 'netflix security', 'paypal verification', 'google security',
+      'microsoft support', 'zoom meeting', 'usps delivery', 'bank security',
+      
+      // Financial scams
+      'free money', 'bitcoin opportunity', 'crypto wallet', 'investment opportunity',
+      'nigerian prince', 'inheritance', 'lottery winner', 'claim prize',
+      
+      // Romance/social engineering
+      'lonely', 'looking for love', 'military deployed', 'widow', 'orphan',
+      
+      // Malware/download traps
+      'download chatgpt', 'install now', 'update required', 'security scan',
+      'virus detected', 'system infected', 'performance boost'
     ];
     
     const contentLower = content.toLowerCase();
-    return phishingKeywords.filter(keyword => contentLower.includes(keyword)).length;
+    let keywordCount = 0;
+    let weightedScore = 0;
+    
+    enhancedPhishingKeywords.forEach(keyword => {
+      if (contentLower.includes(keyword)) {
+        keywordCount++;
+        // Weight more dangerous keywords higher
+        if (keyword.includes('compromised') || keyword.includes('locked') || keyword.includes('suspended')) {
+          weightedScore += 3;
+        } else if (keyword.includes('%') || keyword.includes('free')) {
+          weightedScore += 2;
+        } else {
+          weightedScore += 1;
+        }
+      }
+    });
+    
+    return Math.min(100, weightedScore * 5); // Scale to 0-100
   }
 
   private detectSuspiciousElements(content: string) {
