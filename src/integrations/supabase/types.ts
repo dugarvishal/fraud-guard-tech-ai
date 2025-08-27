@@ -305,12 +305,15 @@ export type Database = {
         Row: {
           alert_type: string
           created_at: string
+          detection_method: string | null
+          evidence_details: Json | null
           explanation: string | null
           id: string
           is_acknowledged: boolean | null
           risk_score: number
           session_id: string | null
           threat_category: string
+          threat_subcategory: string | null
           triggered_features: string[] | null
           url: string
           user_id: string | null
@@ -318,12 +321,15 @@ export type Database = {
         Insert: {
           alert_type: string
           created_at?: string
+          detection_method?: string | null
+          evidence_details?: Json | null
           explanation?: string | null
           id?: string
           is_acknowledged?: boolean | null
           risk_score: number
           session_id?: string | null
           threat_category: string
+          threat_subcategory?: string | null
           triggered_features?: string[] | null
           url: string
           user_id?: string | null
@@ -331,12 +337,15 @@ export type Database = {
         Update: {
           alert_type?: string
           created_at?: string
+          detection_method?: string | null
+          evidence_details?: Json | null
           explanation?: string | null
           id?: string
           is_acknowledged?: boolean | null
           risk_score?: number
           session_id?: string | null
           threat_category?: string
+          threat_subcategory?: string | null
           triggered_features?: string[] | null
           url?: string
           user_id?: string | null
@@ -382,6 +391,36 @@ export type Database = {
           ui_elements?: Json | null
           url?: string
           visual_risk_score?: number | null
+        }
+        Relationships: []
+      }
+      threat_categories: {
+        Row: {
+          category_name: string
+          color_code: string | null
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          severity_level: string
+        }
+        Insert: {
+          category_name: string
+          color_code?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          severity_level?: string
+        }
+        Update: {
+          category_name?: string
+          color_code?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          severity_level?: string
         }
         Relationships: []
       }
@@ -432,14 +471,19 @@ export type Database = {
           analysis_results: Json | null
           analysis_status: string
           app_store_link: string | null
+          classification_confidence: number | null
           created_at: string
           file_name: string | null
           file_size: number | null
           id: string
+          primary_detection_reason: string | null
           risk_level: string | null
           risk_score: number | null
           session_id: string | null
           submission_type: string
+          supporting_evidence: Json | null
+          threat_category: string | null
+          threat_subcategory: string | null
           updated_at: string
           url: string
           user_id: string | null
@@ -448,14 +492,19 @@ export type Database = {
           analysis_results?: Json | null
           analysis_status?: string
           app_store_link?: string | null
+          classification_confidence?: number | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
           id?: string
+          primary_detection_reason?: string | null
           risk_level?: string | null
           risk_score?: number | null
           session_id?: string | null
           submission_type?: string
+          supporting_evidence?: Json | null
+          threat_category?: string | null
+          threat_subcategory?: string | null
           updated_at?: string
           url: string
           user_id?: string | null
@@ -464,14 +513,19 @@ export type Database = {
           analysis_results?: Json | null
           analysis_status?: string
           app_store_link?: string | null
+          classification_confidence?: number | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
           id?: string
+          primary_detection_reason?: string | null
           risk_level?: string | null
           risk_score?: number | null
           session_id?: string | null
           submission_type?: string
+          supporting_evidence?: Json | null
+          threat_category?: string | null
+          threat_subcategory?: string | null
           updated_at?: string
           url?: string
           user_id?: string | null
