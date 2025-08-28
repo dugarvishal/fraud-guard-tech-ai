@@ -46,8 +46,8 @@ const Documentation = () => {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid grid-cols-4 lg:grid-cols-8 w-full">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsList className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-1 bg-muted p-1 rounded-lg h-auto">
+              <TabsTrigger value="overview" className="text-xs p-2">Overview</TabsTrigger>
               <TabsTrigger value="usecases">Use Cases</TabsTrigger>
               <TabsTrigger value="solution">Solution & Benefits</TabsTrigger>
               <TabsTrigger value="ux">User Experience</TabsTrigger>

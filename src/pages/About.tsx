@@ -7,22 +7,28 @@ import { Shield, Users, Globe, Zap, Award, Target } from "lucide-react";
 const About = () => {
   const teamMembers = [
     {
-      name: "Sarah Chen",
-      role: "CEO & Co-founder",
-      bio: "Former cybersecurity lead at Google with 15+ years in AI and fraud detection.",
-      expertise: ["AI/ML", "Cybersecurity", "Leadership"]
+      name: "Vishal Dugar",
+      role: "Team Lead (Growth Leader at Cognizant)",
+      bio: "Experienced growth leader specializing in AI and cybersecurity solutions.",
+      expertise: ["Leadership", "Growth Strategy", "AI/ML"]
     },
     {
-      name: "Marcus Rodriguez", 
-      role: "CTO & Co-founder",
-      bio: "Ex-Microsoft principal engineer specializing in real-time threat detection systems.",
-      expertise: ["System Architecture", "Real-time Processing", "Security"]
+      name: "Mahir Dugar", 
+      role: "Team Member (School Student)",
+      bio: "Passionate student contributing to innovative fraud detection research.",
+      expertise: ["Research", "Innovation", "Technology"]
     },
     {
-      name: "Dr. Emily Watson",
-      role: "Head of AI Research",
-      bio: "PhD in Computer Vision from Stanford, published 50+ papers on fraud detection.",
-      expertise: ["Computer Vision", "NLP", "Research"]
+      name: "Diva Dugar",
+      role: "Team Member (School Student)",
+      bio: "Creative team member focused on user experience and design aspects.",
+      expertise: ["Design", "User Experience", "Innovation"]
+    },
+    {
+      name: "Savvy Bothra",
+      role: "Team Member (College Student)",
+      bio: "Technical contributor specializing in AI development and implementation.",
+      expertise: ["AI Development", "Technical Implementation", "Innovation"]
     }
   ];
 
@@ -145,33 +151,6 @@ const About = () => {
             </CardContent>
           </Card>
 
-          {/* Company Timeline */}
-          <Card className="mb-16">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                Our Journey
-              </CardTitle>
-              <CardDescription>
-                Key milestones in our mission to make the internet safer
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {milestones.map((milestone, index) => (
-                  <div key={index} className="flex gap-4">
-                    <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                      {milestone.year.slice(-2)}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{milestone.event}</h3>
-                      <p className="text-sm text-muted-foreground">{milestone.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Call to Action */}
           <div className="text-center">
@@ -181,12 +160,12 @@ const About = () => {
               we're here to help.
             </p>
             <div className="flex justify-center gap-4">
-              <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90">
+              <a href="/submit" className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90 inline-block">
                 Get Started
-              </button>
-              <button className="border border-border px-6 py-2 rounded-lg font-medium hover:bg-muted">
+              </a>
+              <a href="/contact" className="border border-border px-6 py-2 rounded-lg font-medium hover:bg-muted inline-block">
                 Contact Us
-              </button>
+              </a>
             </div>
           </div>
         </div>

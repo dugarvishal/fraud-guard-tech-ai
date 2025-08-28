@@ -178,6 +178,25 @@ const Auth = () => {
                     </Button>
                   </form>
                 </Form>
+                
+                {/* Demo Credentials */}
+                <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                  <h4 className="text-sm font-medium mb-2">Demo Account</h4>
+                  <div className="space-y-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        signInForm.setValue('email', 'dugarvishal@gmail.com');
+                        signInForm.setValue('password', 'Password@01');
+                      }}
+                      className="block w-full text-left p-2 bg-background rounded border hover:bg-muted transition-colors"
+                    >
+                      <div className="font-medium">Email: dugarvishal@gmail.com</div>
+                      <div className="text-muted-foreground">Password: Password@01</div>
+                      <div className="text-xs text-primary mt-1">Click to auto-fill</div>
+                    </button>
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4">

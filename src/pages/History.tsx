@@ -5,11 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, Search, Filter, Download, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Clock, Search, Filter, Download, ExternalLink, Share } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const History = () => {
   const { user } = useAuth();
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Sample data - this would come from your database
   const analysisHistory = [
@@ -62,6 +66,42 @@ const History = () => {
     });
   };
 
+  const exportHistory = () => {
+    const csvData = analysisHistory.map(item => ({
+      URL: item.url,
+      'Threat Category': item.threatCategory,
+      'Risk Level': item.riskLevel,
+      'Risk Score': item.riskScore,
+      'Analyzed At': formatDate(item.analyzedAt),
+      'Status': item.status
+    }));
+    
+    const csvContent = [
+      Object.keys(csvData[0]).join(','),
+      ...csvData.map(row => Object.values(row).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'analysis-history.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const shareAnalysis = (analysisId: string) => {
+    const shareUrl = `${window.location.origin}/report/${analysisId}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert('Share link copied to clipboard!');
+    });
+  };
+
+  const openReportModal = (analysis: any) => {
+    setSelectedReport(analysis);
+    setIsReportModalOpen(true);
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -97,7 +137,7 @@ const History = () => {
                 Track and review all your security analyses
               </p>
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={exportHistory}>
               <Download className="h-4 w-4 mr-2" />
               Export History
             </Button>
@@ -123,6 +163,18 @@ const History = () => {
                     <SelectItem value="medium">Medium Risk</SelectItem>
                     <SelectItem value="high">High Risk</SelectItem>
                     <SelectItem value="critical">Critical Risk</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select defaultValue="all-categories">
+                  <SelectTrigger className="md:w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-categories">All Categories</SelectItem>
+                    <SelectItem value="phishing">Phishing Domain</SelectItem>
+                    <SelectItem value="malware">Malware</SelectItem>
+                    <SelectItem value="fake-website">Fake Website</SelectItem>
+                    <SelectItem value="safe-content">Safe Content</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select defaultValue="30d">
@@ -167,11 +219,11 @@ const History = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => openReportModal(analysis)}>
                         View Report
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <ExternalLink className="h-4 w-4" />
+                      <Button variant="ghost" size="sm" onClick={() => shareAnalysis(analysis.id)}>
+                        <Share className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -207,6 +259,64 @@ const History = () => {
             </Card>
           )}
         </div>
+
+        {/* Report Modal */}
+        <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detailed Analysis Report</DialogTitle>
+              <DialogDescription>
+                Complete security analysis for {selectedReport?.url}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedReport && (
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Risk Assessment</h3>
+                    <Badge variant={getRiskBadgeVariant(selectedReport.riskLevel)} className="mb-2">
+                      {selectedReport.riskLevel.charAt(0).toUpperCase() + selectedReport.riskLevel.slice(1)} Risk
+                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      Risk Score: {selectedReport.riskScore}/100
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Threat Category</h3>
+                    <Badge variant="outline">{selectedReport.threatCategory}</Badge>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Detection Details</h3>
+                  <p className="text-sm text-muted-foreground">
+                    This analysis was performed using our advanced AI models that examine multiple factors 
+                    including domain reputation, content analysis, and behavioral patterns.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Recommendations</h3>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {selectedReport.riskLevel === 'high' || selectedReport.riskLevel === 'critical' ? (
+                      <>
+                        <li>• Avoid entering personal information on this site</li>
+                        <li>• Do not download files from this domain</li>
+                        <li>• Report this site to relevant authorities</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>• This site appears to be safe for general browsing</li>
+                        <li>• Still exercise caution with personal information</li>
+                        <li>• Verify SSL certificates before entering sensitive data</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
       
       <Footer />

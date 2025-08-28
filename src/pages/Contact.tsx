@@ -18,14 +18,14 @@ const Contact = () => {
     {
       icon: Phone,
       title: "Phone",
-      details: "+1 (555) 123-4567",
-      description: "Mon-Fri from 8am to 6pm PST"
+      details: "+91 6292150988",
+      description: "Mon-Fri from 8am to 6pm IST"
     },
     {
       icon: MapPin,
       title: "Office",
-      details: "San Francisco, CA",
-      description: "123 Security Street, Suite 100"
+      details: "Kolkata, India",
+      description: "Available for meetings by appointment"
     },
     {
       icon: Clock,
@@ -187,7 +187,9 @@ const Contact = () => {
             <p className="text-muted-foreground mb-6">
               Check out our help center for answers to common questions
             </p>
-            <Button variant="outline">Visit Help Center</Button>
+            <a href="/documentation">
+              <Button variant="outline">Visit Help Center</Button>
+            </a>
           </div>
         </div>
       </main>
