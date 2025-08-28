@@ -7,44 +7,76 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Clock, Search, Filter, Download, ExternalLink, Share } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const History = () => {
   const { user } = useAuth();
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [analysisHistory, setAnalysisHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [riskFilter, setRiskFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all-categories");
+  const [dateFilter, setDateFilter] = useState("30d");
 
-  // Sample data - this would come from your database
-  const analysisHistory = [
-    {
-      id: "1",
-      url: "https://suspicious-bank-login.com",
-      threatCategory: "Phishing Domain",
-      riskScore: 87,
-      riskLevel: "high",
-      analyzedAt: "2025-01-15T10:30:00Z",
-      status: "completed"
-    },
-    {
-      id: "2", 
-      url: "https://legitimate-ecommerce.com",
-      threatCategory: "Safe Content",
-      riskScore: 12,
-      riskLevel: "low",
-      analyzedAt: "2025-01-15T09:15:00Z",
-      status: "completed"
-    },
-    {
-      id: "3",
-      url: "https://fake-crypto-exchange.net",
-      threatCategory: "Fake Website", 
-      riskScore: 94,
-      riskLevel: "critical",
-      analyzedAt: "2025-01-14T16:45:00Z",
-      status: "completed"
+  // Fetch user's analysis history from database
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('url_submissions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const formattedData = data.map(item => ({
+          id: item.id,
+          url: item.url,
+          threatCategory: item.threat_category || 'Unknown',
+          riskScore: item.risk_score || 0,
+          riskLevel: item.risk_level || 'unknown',
+          analyzedAt: item.created_at,
+          status: item.analysis_status || 'completed',
+          analysisResults: item.analysis_results
+        }));
+
+        setAnalysisHistory(formattedData);
+      } catch (error) {
+        console.error('Error fetching history:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [user]);
+
+  // Filter history based on search and filters
+  const filteredHistory = analysisHistory.filter(item => {
+    const matchesSearch = item.url.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRisk = riskFilter === "all" || item.riskLevel === riskFilter;
+    const matchesCategory = categoryFilter === "all-categories" || 
+      item.threatCategory.toLowerCase().includes(categoryFilter.replace('-', ' '));
+    
+    // Date filtering
+    let matchesDate = true;
+    if (dateFilter !== "all") {
+      const itemDate = new Date(item.analyzedAt);
+      const now = new Date();
+      const daysAgo = parseInt(dateFilter.replace('d', ''));
+      const cutoffDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+      matchesDate = itemDate >= cutoffDate;
     }
-  ];
+
+    return matchesSearch && matchesRisk && matchesCategory && matchesDate;
+  });
 
   const getRiskBadgeVariant = (riskLevel: string) => {
     switch (riskLevel) {
@@ -67,7 +99,12 @@ const History = () => {
   };
 
   const exportHistory = () => {
-    const csvData = analysisHistory.map(item => ({
+    if (filteredHistory.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    const csvData = filteredHistory.map(item => ({
       URL: item.url,
       'Threat Category': item.threatCategory,
       'Risk Level': item.riskLevel,
@@ -78,14 +115,14 @@ const History = () => {
     
     const csvContent = [
       Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
+      ...csvData.map(row => Object.values(row).map(v => `"${v}"`).join(','))
     ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'analysis-history.csv';
+    a.download = `analysis-history-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -150,10 +187,15 @@ const History = () => {
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search by URL..." className="pl-10" />
+                    <Input 
+                      placeholder="Search by URL..." 
+                      className="pl-10" 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
                 </div>
-                <Select defaultValue="all">
+                <Select value={riskFilter} onValueChange={setRiskFilter}>
                   <SelectTrigger className="md:w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -165,7 +207,7 @@ const History = () => {
                     <SelectItem value="critical">Critical Risk</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select defaultValue="all-categories">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="md:w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -177,7 +219,7 @@ const History = () => {
                     <SelectItem value="safe-content">Safe Content</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select defaultValue="30d">
+                <Select value={dateFilter} onValueChange={setDateFilter}>
                   <SelectTrigger className="md:w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -193,8 +235,14 @@ const History = () => {
           </Card>
 
           {/* History List */}
-          <div className="space-y-4">
-            {analysisHistory.map((analysis) => (
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-muted-foreground">Loading history...</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredHistory.map((analysis) => (
               <Card key={analysis.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -229,8 +277,9 @@ const History = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Pagination */}
           <div className="flex justify-center mt-8">
@@ -242,7 +291,21 @@ const History = () => {
           </div>
 
           {/* Empty State (when no history) */}
-          {analysisHistory.length === 0 && (
+          {!loading && filteredHistory.length === 0 && analysisHistory.length > 0 && (
+            <Card className="text-center py-12">
+              <CardContent>
+                <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No Results Found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search filters to find what you're looking for.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {!loading && analysisHistory.length === 0 && (
             <Card className="text-center py-12">
               <CardContent>
                 <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
