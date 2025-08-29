@@ -312,7 +312,7 @@ const Intelligence = () => {
             </p>
             <div className="flex justify-center gap-4">
               <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90">
-                Upgrade to Pro
+                Upgrade to Pro (upcoming)
               </button>
               <button className="border border-border px-6 py-2 rounded-lg font-medium hover:bg-muted">
                 Learn More
