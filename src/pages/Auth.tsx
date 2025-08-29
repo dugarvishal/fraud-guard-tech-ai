@@ -181,17 +181,38 @@ const Auth = () => {
                 
                 {/* Demo Credentials */}
                 <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                  <h4 className="text-sm font-medium mb-2">Demo Account</h4>
-                  <div className="space-y-2 text-xs">
+                  <h4 className="text-sm font-medium mb-3">Demo Accounts</h4>
+                  <div className="space-y-3 text-xs">
                     <button
                       type="button"
                       onClick={() => {
                         signInForm.setValue('email', 'dugarvishal@gmail.com');
                         signInForm.setValue('password', 'Password@01');
                       }}
-                      className="block w-full text-left p-2 bg-background rounded border hover:bg-muted transition-colors"
+                      className="block w-full text-left p-3 bg-background rounded border hover:bg-muted transition-colors"
                     >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="font-medium text-blue-700">User Demo Account</span>
+                      </div>
                       <div className="font-medium">Email: dugarvishal@gmail.com</div>
+                      <div className="text-muted-foreground">Password: Password@01</div>
+                      <div className="text-xs text-primary mt-1">Click to auto-fill</div>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        signInForm.setValue('email', 'adminFG@gmail.com');
+                        signInForm.setValue('password', 'Password@01');
+                      }}
+                      className="block w-full text-left p-3 bg-background rounded border hover:bg-muted transition-colors border-orange-200"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <span className="font-medium text-orange-700">Admin Demo Account</span>
+                      </div>
+                      <div className="font-medium">Email: adminFG@gmail.com</div>
                       <div className="text-muted-foreground">Password: Password@01</div>
                       <div className="text-xs text-primary mt-1">Click to auto-fill</div>
                     </button>

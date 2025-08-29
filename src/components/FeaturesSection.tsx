@@ -42,7 +42,7 @@ const FeaturesSection = () => {
     {
       icon: Smartphone,
       title: "Mobile App Analysis",
-      description: "Detect malicious apps and suspicious permissions"
+      description: "Detect malicious apps and suspicious permissions (upcoming)"
     },
     {
       icon: Shield,

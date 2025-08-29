@@ -107,7 +107,7 @@ const API = () => {
                       <p className="text-2xl font-bold">$29/mo</p>
                       <p className="text-sm text-muted-foreground">Up to 1,000 requests</p>
                     </div>
-                    <Badge variant="outline">Basic Support</Badge>
+                    <Badge variant="outline">Basic Support (upcoming)</Badge>
                   </div>
                   <div className="border rounded-lg p-6 border-primary">
                     <div className="mb-4">
@@ -115,7 +115,7 @@ const API = () => {
                       <p className="text-2xl font-bold">$99/mo</p>
                       <p className="text-sm text-muted-foreground">Up to 10,000 requests</p>
                     </div>
-                    <Badge>Priority Support</Badge>
+                    <Badge>Priority Support (upcoming)</Badge>
                   </div>
                   <div className="border rounded-lg p-6">
                     <div className="mb-4">
@@ -123,7 +123,7 @@ const API = () => {
                       <p className="text-2xl font-bold">Custom</p>
                       <p className="text-sm text-muted-foreground">Unlimited requests</p>
                     </div>
-                    <Badge variant="outline">24/7 Support</Badge>
+                    <Badge variant="outline">24/7 Support (upcoming)</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -136,8 +136,8 @@ const API = () => {
               Contact our team to get your API key and start integrating today
             </p>
             <div className="flex justify-center gap-4">
-              <Button>Get API Key</Button>
-              <Button variant="outline">View Documentation</Button>
+              <Button>Get API Key (upcoming)</Button>
+              <Button variant="outline">View Documentation (upcoming)</Button>
             </div>
           </div>
         </div>
