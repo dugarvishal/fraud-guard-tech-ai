@@ -27,17 +27,17 @@ const About = () => {
     {
       name: "Savvy Bothra",
       role: "Team Member (College Student)",
-      bio: "Technical contributor specializing in AI development and implementation.",
+      bio: "Technical contributor specializing in research.",
       expertise: ["AI Development", "Technical Implementation", "Innovation"]
     }
   ];
 
   const milestones = [
     { year: "2023", event: "Company Founded", description: "Started with a mission to democratize fraud detection" },
-    { year: "2023", event: "First AI Model", description: "Launched our proprietary phishing detection algorithm" },
-    { year: "2024", event: "Series A Funding", description: "Raised $10M to expand our AI capabilities" },
-    { year: "2024", event: "Global Expansion", description: "Now protecting users in 50+ countries" },
-    { year: "2025", event: "50M+ URLs Analyzed", description: "Reached major milestone in threat detection" }
+    { year: "2023", event: "First AI Model", description: "Launched our phishing detection algorithm" },
+    { year: "2024", event: "Series A Funding", description: "Interested teams, please contact" },
+    { year: "2024", event: "Global Expansion", description: "Now protecting users in multiple countries" },
+    { year: "2025", event: "Numerous URLs Analyzed", description: "Reached major milestone in threat detection" }
   ];
 
   return (
@@ -101,21 +101,21 @@ const About = () => {
               <div className="bg-primary/10 w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <div className="text-3xl font-bold mb-2">1M+</div>
+              <div className="text-3xl font-bold mb-2">Numerous</div>
               <div className="text-sm text-muted-foreground">Protected Users</div>
             </div>
             <div className="text-center">
               <div className="bg-primary/10 w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Globe className="h-8 w-8 text-primary" />
               </div>
-              <div className="text-3xl font-bold mb-2">50+</div>
+              <div className="text-3xl font-bold mb-2">Multiple</div>
               <div className="text-sm text-muted-foreground">Countries Served</div>
             </div>
             <div className="text-center">
               <div className="bg-primary/10 w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Zap className="h-8 w-8 text-primary" />
               </div>
-              <div className="text-3xl font-bold mb-2">50M+</div>
+              <div className="text-3xl font-bold mb-2">Numerous</div>
               <div className="text-sm text-muted-foreground">URLs Analyzed</div>
             </div>
           </div>

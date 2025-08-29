@@ -31,7 +31,7 @@ const HeroSection = () => {
                 <div className="text-sm text-muted-foreground">Accuracy Rate</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-security-primary">50M+</div>
+                <div className="text-2xl font-bold text-security-primary">Numerous</div>
                 <div className="text-sm text-muted-foreground">URLs Analyzed</div>
               </div>
               <div className="text-center">
