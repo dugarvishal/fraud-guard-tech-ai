@@ -86,7 +86,7 @@ const Blog = () => {
             <p className="text-muted-foreground mb-4">
               More articles coming soon. Stay tuned for the latest security insights!
             </p>
-            <Button variant="outline">Subscribe to Updates</Button>
+            <Button variant="outline">Subscribe to Updates (upcoming)</Button>
           </div>
         </div>
       </main>
