@@ -187,7 +187,7 @@ const Auth = () => {
                       type="button"
                       onClick={() => {
                         signInForm.setValue('email', 'dugarvishal@gmail.com');
-                        signInForm.setValue('password', 'Password@01');
+                        signInForm.setValue('password', 'Dugarvishal@01');
                       }}
                       className="block w-full text-left p-3 bg-background rounded border hover:bg-muted transition-colors"
                     >
@@ -196,7 +196,7 @@ const Auth = () => {
                         <span className="font-medium text-blue-700">User Demo Account</span>
                       </div>
                       <div className="font-medium">Email: dugarvishal@gmail.com</div>
-                      <div className="text-muted-foreground">Password: Password@01</div>
+                      <div className="text-muted-foreground">Password: Dugarvishal@01</div>
                       <div className="text-xs text-primary mt-1">Click to auto-fill</div>
                     </button>
                     
