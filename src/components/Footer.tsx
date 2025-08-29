@@ -9,7 +9,7 @@ const Footer = () => {
         { name: "Submit URL", href: "/submit" },
         { name: "Analytics Dashboard", href: "/analytics" },
         { name: "AI Assistant", href: "/assistant" },
-        { name: "API Access", href: "/api" }
+        { name: "API Access (upcoming)", href: "/api" }
       ]
     },
     {
