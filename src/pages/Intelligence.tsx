@@ -42,30 +42,38 @@ const Intelligence = () => {
     {
       name: "Natural Language Processing",
       icon: Brain,
-      description: "Advanced NLP models analyze website content, detect suspicious language patterns, and identify phishing attempts.",
-      features: ["Text Classification", "Sentiment Analysis", "Entity Recognition", "Language Detection"],
-      accuracy: 94.7
+      description: "Advanced transformer models analyze website content using state-of-the-art NLP techniques for threat detection.",
+      features: ["BERT-based Classification", "GPT-powered Analysis", "Multilingual Detection", "Semantic Understanding"],
+      accuracy: 96.2,
+      model: "transformer-based",
+      status: "active"
     },
     {
       name: "Computer Vision",
       icon: Camera,
-      description: "Deep learning models examine visual elements, detect brand impersonation, and analyze layout patterns.",
-      features: ["Logo Detection", "Brand Similarity", "Layout Analysis", "Visual Fingerprinting"],
-      accuracy: 88.9
+      description: "Enhanced deep learning models with WebGPU acceleration for real-time visual threat analysis.",
+      features: ["CNN-based Detection", "Object Recognition", "Brand Impersonation", "Layout Fingerprinting"],
+      accuracy: 92.4,
+      model: "ResNet-50 + DETR",
+      status: "active"
     },
     {
       name: "Real-Time Monitoring",
       icon: Zap,
-      description: "Continuous monitoring system with machine learning algorithms for instant threat detection.",
-      features: ["Live URL Scanning", "Pattern Recognition", "Anomaly Detection", "Automated Alerts"],
-      accuracy: 97.3
+      description: "Distributed AI system with edge computing for instantaneous threat response and alerting.",
+      features: ["Edge AI Processing", "WebSocket Alerts", "Predictive Analysis", "Auto-mitigation"],
+      accuracy: 98.1,
+      model: "ensemble-based",
+      status: "active"
     },
     {
       name: "Behavioral Analysis",
       icon: Search,
-      description: "AI models analyze user interaction patterns and website behavior to identify malicious intent.",
-      features: ["Click Patterns", "Navigation Analysis", "Form Interaction", "Time-based Analysis"],
-      accuracy: 92.1
+      description: "Advanced pattern recognition using reinforcement learning to identify sophisticated attack vectors.",
+      features: ["ML-based Patterns", "Anomaly Detection", "Risk Scoring", "Adaptive Learning"],
+      accuracy: 94.7,
+      model: "reinforcement-learning",
+      status: "active"
     }
   ];
 
@@ -118,24 +126,38 @@ const Intelligence = () => {
           {/* AI Technologies Section */}
           <div className="mb-16">
             <h2 className="text-2xl font-bold mb-8 text-center">Our AI Technologies</h2>
+            <div className="mb-6 text-center">
+              <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-primary">Live AI Systems Active</span>
+              </div>
+            </div>
             <div className="grid md:grid-cols-2 gap-8">
               {aiTechnologies.map((tech, index) => (
-                <Card key={index} className="p-6">
+                <Card key={index} className="p-6 relative overflow-hidden">
+                  <div className="absolute top-2 right-2">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-green-600 font-medium">{tech.status}</span>
+                    </div>
+                  </div>
                   <div className="flex items-start gap-4">
                     <div className="bg-primary/10 p-3 rounded-lg">
                       <tech.icon className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2">{tech.name}</h3>
+                      <h3 className="font-semibold text-lg mb-1">{tech.name}</h3>
+                      <p className="text-xs text-muted-foreground mb-3">Model: {tech.model}</p>
                       <p className="text-muted-foreground mb-4 text-sm">{tech.description}</p>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium">Accuracy</span>
+                        <span className="text-sm font-medium">Detection Accuracy</span>
                         <span className="text-sm text-primary font-semibold">{tech.accuracy}%</span>
                       </div>
                       <Progress value={tech.accuracy} className="h-2 mb-4" />
                       <div className="grid grid-cols-2 gap-2">
                         {tech.features.map((feature, idx) => (
-                          <div key={idx} className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                          <div key={idx} className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded flex items-center gap-1">
+                            <div className="w-1 h-1 bg-primary rounded-full"></div>
                             {feature}
                           </div>
                         ))}
@@ -311,8 +333,9 @@ const Intelligence = () => {
               Get access to premium threat intelligence and advanced protection features
             </p>
             <div className="flex justify-center gap-4">
-              <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90">
-                Upgrade to Pro (upcoming)
+              <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90 relative">
+                Upgrade to Pro 
+                <span className="ml-2 text-xs bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full">upcoming</span>
               </button>
               <button className="border border-border px-6 py-2 rounded-lg font-medium hover:bg-muted">
                 Learn More

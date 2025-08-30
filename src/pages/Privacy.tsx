@@ -1,6 +1,8 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PrivacyControls from "@/components/PrivacyControls";
 import { Shield, Lock, Eye, Database } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Privacy = () => {
   return (
@@ -21,7 +23,13 @@ const Privacy = () => {
             </p>
           </div>
 
-          <div className="prose prose-gray max-w-none space-y-8">
+          <Tabs defaultValue="policy" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="policy">Privacy Policy</TabsTrigger>
+              <TabsTrigger value="controls">Privacy Controls</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="policy" className="space-y-8">
             <section className="space-y-4">
               <div className="flex items-center gap-3">
                 <Lock className="h-6 w-6 text-primary" />
@@ -138,7 +146,12 @@ const Privacy = () => {
                 <p className="mt-2 font-medium text-foreground">privacy@fraudguard.ai</p>
               </div>
             </section>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="controls">
+              <PrivacyControls />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       <Footer />
