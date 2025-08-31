@@ -108,8 +108,16 @@ const Help = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">{channel.available}</p>
-                  <Button variant="outline" className="w-full">
-                    {channel.action}
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    asChild={channel.title === "Documentation"}
+                  >
+                    {channel.title === "Documentation" ? (
+                      <a href="/documentation">{channel.action}</a>
+                    ) : (
+                      channel.action
+                    )}
                   </Button>
                 </CardContent>
               </Card>
