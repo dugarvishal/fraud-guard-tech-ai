@@ -200,7 +200,7 @@ const Documentation = () => {
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold flex items-center gap-2">
                       <Building className="h-5 w-5" />
-                      Brand Protection Monitoring
+                      Brand Protection Monitoring (Coming Soon)
                     </h3>
                     <div className="pl-6 space-y-3">
                       <p className="text-muted-foreground">Monitor for brand impersonation and trademark abuse</p>
