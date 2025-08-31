@@ -234,7 +234,7 @@ const Documentation = () => {
                         <h4 className="font-medium mb-2">Batch Upload Process:</h4>
                         <ol className="list-decimal list-inside space-y-2 text-sm">
                           <li>Prepare CSV file with URLs in first column (max 1000 URLs)</li>
-                          <li>Navigate to <strong>Submit URL</strong> → <strong>Batch Upload</strong> tab</li>
+                          <li>Navigate to <strong>Submit</strong> → <strong>Batch Upload</strong> tab</li>
                           <li>Click <strong>"Choose File"</strong> and select your CSV</li>
                           <li>Preview URLs to ensure proper formatting</li>
                           <li>Click <strong>"Start Batch Analysis"</strong> to begin processing</li>
