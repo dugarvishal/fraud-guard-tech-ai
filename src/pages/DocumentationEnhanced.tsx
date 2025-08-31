@@ -98,7 +98,7 @@ const Documentation = () => {
                       <div className="bg-muted/50 p-4 rounded-lg">
                         <h4 className="font-medium mb-2">Step-by-Step Process:</h4>
                         <ol className="list-decimal list-inside space-y-2 text-sm">
-                          <li>Navigate to the <strong>Submit</strong> page from the main menu</li>
+                          <li>Navigate to the <strong>Submit Url</strong> page from the main menu</li>
                           <li>Enter the suspicious URL in the input field (e.g., https://suspicious-site.com)</li>
                           <li>Click <strong>"Analyze URL"</strong> to start the scanning process</li>
                           <li>Wait 2-10 seconds for our AI to perform comprehensive analysis</li>
@@ -117,7 +117,7 @@ const Documentation = () => {
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold flex items-center gap-2">
                       <AlertTriangle className="h-5 w-5" />
-                      Real-Time Alerting Setup
+                      Real-Time Alerting Setup (Coming Soon)
                     </h3>
                     <div className="pl-6 space-y-3">
                       <p className="text-muted-foreground">Instant notifications for detected threats</p>
@@ -169,7 +169,7 @@ const Documentation = () => {
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold flex items-center gap-2">
                       <Eye className="h-5 w-5" />
-                      Computer Vision Analysis
+                      Computer Vision Analysis 
                     </h3>
                     <div className="pl-6 space-y-3">
                       <p className="text-muted-foreground">Advanced visual analysis of websites and apps</p>
