@@ -36,7 +36,10 @@ import {
   FileText,
   Workflow,
   Bell,
-  Camera
+  Camera,
+  BookOpen,
+  Search,
+  FileSpreadsheet
 } from "lucide-react";
 
 const Documentation = () => {
@@ -49,16 +52,15 @@ const Documentation = () => {
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              AI-Powered Threat Detection System
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Comprehensive documentation for our advanced cybersecurity platform utilizing NLP, Computer Vision, and Real-Time Intelligence
+            <h1 className="text-4xl font-bold mb-4">Platform Documentation</h1>
+            <p className="text-xl text-muted-foreground">
+              Complete user guides and technical documentation for FraudGuard AI
             </p>
           </div>
 
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid grid-cols-2 lg:grid-cols-5 xl:grid-cols-10 gap-1 bg-muted p-1 rounded-lg h-auto">
+          <Tabs defaultValue="user-guides" className="space-y-6">
+            <TabsList className="grid grid-cols-2 lg:grid-cols-6 xl:grid-cols-11 gap-1 bg-muted p-1 rounded-lg h-auto">
+              <TabsTrigger value="user-guides" className="text-xs p-2">User Guides</TabsTrigger>
               <TabsTrigger value="overview" className="text-xs p-2">Overview</TabsTrigger>
               <TabsTrigger value="usecases" className="text-xs p-2">Use Cases</TabsTrigger>
               <TabsTrigger value="ai-implementation" className="text-xs p-2">AI Implementation</TabsTrigger>
@@ -70,6 +72,185 @@ const Documentation = () => {
               <TabsTrigger value="business" className="text-xs p-2">Business Opportunity</TabsTrigger>
               <TabsTrigger value="scalability" className="text-xs p-2">Scalability</TabsTrigger>
             </TabsList>
+
+            {/* User Guides Section */}
+            <TabsContent value="user-guides" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-6 w-6" />
+                    How-To User Guides
+                  </CardTitle>
+                  <CardDescription>
+                    Step-by-step instructions for using all platform features
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  
+                  {/* URL Scanning Guide */}
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                      <Search className="h-5 w-5" />
+                      URL Scanning Process
+                    </h3>
+                    <div className="pl-6 space-y-3">
+                      <p className="text-muted-foreground">Complete analysis of suspicious URLs and websites</p>
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium mb-2">Step-by-Step Process:</h4>
+                        <ol className="list-decimal list-inside space-y-2 text-sm">
+                          <li>Navigate to the <strong>Submit</strong> page from the main menu</li>
+                          <li>Enter the suspicious URL in the input field (e.g., https://suspicious-site.com)</li>
+                          <li>Click <strong>"Analyze URL"</strong> to start the scanning process</li>
+                          <li>Wait 2-10 seconds for our AI to perform comprehensive analysis</li>
+                          <li>Review the results showing Risk Score (0-100) and threat categories</li>
+                          <li>Click <strong>"View Detailed Report"</strong> to see full analysis breakdown</li>
+                          <li>Use the <strong>"Share Results"</strong> button to send reports to colleagues</li>
+                        </ol>
+                      </div>
+                      <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                        <p className="text-sm"><strong>Pro Tip:</strong> For best results, copy the complete URL including https:// protocol</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Real-Time Alerting Guide */}
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      Real-Time Alerting Setup
+                    </h3>
+                    <div className="pl-6 space-y-3">
+                      <p className="text-muted-foreground">Instant notifications for detected threats</p>
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium mb-2">Setup Instructions:</h4>
+                        <ol className="list-decimal list-inside space-y-2 text-sm">
+                          <li>Create an account or sign in to access alert preferences</li>
+                          <li>Navigate to <strong>Profile Settings</strong> → <strong>Notifications</strong></li>
+                          <li>Enable <strong>"Real-Time Alerts"</strong> toggle</li>
+                          <li>Select notification methods: Browser, Email, or Both</li>
+                          <li>Set risk threshold (recommend High Risk = 70+ score)</li>
+                          <li>Configure alert frequency (Immediate vs Batched)</li>
+                          <li>Test notifications by clicking <strong>"Send Test Alert"</strong></li>
+                        </ol>
+                      </div>
+                      <div className="bg-amber-50 p-3 rounded border-l-4 border-amber-400">
+                        <p className="text-sm"><strong>Note:</strong> Browser notifications require permission - click "Allow" when prompted</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Browser Extension Guide */}
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Browser Extension Protection (Coming Soon)
+                    </h3>
+                    <div className="pl-6 space-y-3">
+                      <p className="text-muted-foreground">Real-time protection during web browsing</p>
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium mb-2">Installation Process:</h4>
+                        <ol className="list-decimal list-inside space-y-2 text-sm">
+                          <li>Download FraudGuard extension from Chrome Web Store</li>
+                          <li>Click <strong>"Add to Chrome"</strong> and confirm installation</li>
+                          <li>Pin the extension to your browser toolbar</li>
+                          <li>Sign in with your FraudGuard account for full features</li>
+                          <li>Configure protection levels (Low, Medium, High)</li>
+                          <li>Enable automatic scanning of visited websites</li>
+                          <li>Review protection summary in the extension popup</li>
+                        </ol>
+                      </div>
+                      <div className="bg-green-50 p-3 rounded border-l-4 border-green-400">
+                        <p className="text-sm"><strong>Coming Soon:</strong> Browser extension currently in development - join waitlist for early access</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Computer Vision Guide */}
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                      <Eye className="h-5 w-5" />
+                      Computer Vision Analysis
+                    </h3>
+                    <div className="pl-6 space-y-3">
+                      <p className="text-muted-foreground">Advanced visual analysis of websites and apps</p>
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium mb-2">How It Works:</h4>
+                        <ol className="list-decimal list-inside space-y-2 text-sm">
+                          <li>System automatically captures website screenshots during analysis</li>
+                          <li>AI analyzes visual elements: logos, layouts, color schemes</li>
+                          <li>Brand similarity detection compares against legitimate sites</li>
+                          <li>UI element analysis identifies suspicious design patterns</li>
+                          <li>Results appear in the <strong>"Visual Analysis"</strong> section of reports</li>
+                          <li>View side-by-side comparisons of suspicious vs legitimate sites</li>
+                          <li>Export visual evidence for reporting and documentation</li>
+                        </ol>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4 mt-4">
+                        <div className="bg-red-50 p-3 rounded border-l-4 border-red-400">
+                          <p className="text-sm"><strong>High Risk Indicators:</strong> Logo copying, identical layouts, matching color schemes</p>
+                        </div>
+                        <div className="bg-yellow-50 p-3 rounded border-l-4 border-yellow-400">
+                          <p className="text-sm"><strong>Medium Risk:</strong> Similar fonts, comparable layouts, generic designs</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Brand Protection Guide */}
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                      <Building className="h-5 w-5" />
+                      Brand Protection Monitoring
+                    </h3>
+                    <div className="pl-6 space-y-3">
+                      <p className="text-muted-foreground">Monitor for brand impersonation and trademark abuse</p>
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium mb-2">Setup Brand Monitoring:</h4>
+                        <ol className="list-decimal list-inside space-y-2 text-sm">
+                          <li>Navigate to <strong>Intelligence</strong> → <strong>Brand Protection</strong></li>
+                          <li>Click <strong>"Add Brand"</strong> to register your company/brand</li>
+                          <li>Upload official logos and brand assets for comparison</li>
+                          <li>Configure monitoring keywords (company name, product names)</li>
+                          <li>Set detection sensitivity (High, Medium, Low)</li>
+                          <li>Enable automatic scanning and alert notifications</li>
+                          <li>Review weekly brand protection reports</li>
+                        </ol>
+                      </div>
+                      <div className="bg-purple-50 p-3 rounded border-l-4 border-purple-400">
+                        <p className="text-sm"><strong>Business Feature:</strong> Brand monitoring available for Pro and Enterprise accounts</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Batch Processing Guide */}
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                      <FileSpreadsheet className="h-5 w-5" />
+                      Batch URL Processing
+                    </h3>
+                    <div className="pl-6 space-y-3">
+                      <p className="text-muted-foreground">Analyze multiple URLs simultaneously via CSV upload</p>
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium mb-2">Batch Upload Process:</h4>
+                        <ol className="list-decimal list-inside space-y-2 text-sm">
+                          <li>Prepare CSV file with URLs in first column (max 1000 URLs)</li>
+                          <li>Navigate to <strong>Submit</strong> → <strong>Batch Upload</strong> tab</li>
+                          <li>Click <strong>"Choose File"</strong> and select your CSV</li>
+                          <li>Preview URLs to ensure proper formatting</li>
+                          <li>Click <strong>"Start Batch Analysis"</strong> to begin processing</li>
+                          <li>Monitor progress in real-time via progress bar</li>
+                          <li>Download complete results as CSV report when finished</li>
+                        </ol>
+                      </div>
+                      <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                        <p className="text-sm"><strong>CSV Format:</strong> First column = URLs, optional second column = labels/notes</p>
+                      </div>
+                    </div>
+                  </div>
+
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* System Overview */}
             <TabsContent value="overview" className="space-y-6">
