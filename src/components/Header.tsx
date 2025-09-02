@@ -1,15 +1,38 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Shield, Menu, X, User, LogOut, BarChart3, History } from "lucide-react";
-import { useState } from "react";
+import { Shield, Menu, X, User, LogOut, BarChart3, History, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const { user, signOut } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    if (user) {
+      // Fetch user role from profiles table
+      const fetchUserRole = async () => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setUserRole(data.role);
+        }
+      };
+      
+      fetchUserRole();
+    } else {
+      setUserRole(null);
+    }
+  }, [user]);
 
   const navItems = [
     { name: "Submit URL", href: "/submit" },
@@ -17,6 +40,7 @@ const Header = () => {
     { name: "Education", href: "/education" },
     { name: "Documentation", href: "/documentation" },
     { name: "AI Assistant", href: "/assistant" },
+    ...(userRole === 'admin' ? [{ name: "Admin Functions", href: "/admin", adminRequired: true }] : []),
   ];
 
   const handleSignOut = async () => {
@@ -51,9 +75,10 @@ const Header = () => {
                         : isAuthRequired 
                           ? 'text-muted-foreground/60 cursor-not-allowed' 
                           : 'text-muted-foreground hover:text-primary'
-                    }`}
+                    } ${item.adminRequired ? 'text-orange-600 font-semibold' : ''}`}
                     onClick={(e) => isAuthRequired && e.preventDefault()}
                   >
+                    {item.adminRequired && <Settings className="h-4 w-4" />}
                     {item.name}
                     {isAuthRequired && <Badge variant="secondary" className="text-xs">Login Required</Badge>}
                   </Link>
@@ -85,6 +110,17 @@ const Header = () => {
                       Submission History
                     </Link>
                   </DropdownMenuItem>
+                  {userRole === 'admin' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center gap-2 text-orange-600 font-semibold">
+                          <Settings className="h-4 w-4" />
+                          Admin Functions
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2">
                     <LogOut className="h-4 w-4" />
@@ -131,7 +167,7 @@ const Header = () => {
                         : isAuthRequired 
                           ? 'text-muted-foreground/60 cursor-not-allowed' 
                           : 'text-muted-foreground hover:text-primary hover:bg-muted'
-                    }`}
+                    } ${item.adminRequired ? 'text-orange-600 font-semibold' : ''}`}
                     onClick={(e) => {
                       if (isAuthRequired) {
                         e.preventDefault();
@@ -140,7 +176,10 @@ const Header = () => {
                       }
                     }}
                   >
-                    {item.name}
+                    <span className="flex items-center gap-2">
+                      {item.adminRequired && <Settings className="h-4 w-4" />}
+                      {item.name}
+                    </span>
                     {isAuthRequired && <Badge variant="secondary" className="text-xs">Login Required</Badge>}
                   </Link>
                 );
@@ -158,6 +197,14 @@ const Header = () => {
                         Analytics
                       </Link>
                     </Button>
+                    {userRole === 'admin' && (
+                      <Button variant="ghost" size="sm" className="w-full justify-start text-orange-600 font-semibold" asChild>
+                        <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
+                          <Settings className="h-4 w-4 mr-2" />
+                          Admin Functions
+                        </Link>
+                      </Button>
+                    )}
                     <Button 
                       variant="ghost" 
                       size="sm" 
